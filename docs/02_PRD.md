@@ -9,7 +9,7 @@
 
 ## 1. Product Vision
 
-A single platform where Club Innogeeks at KIET Group of Institutions manages everything — recruitment, attendance, resources, and events — while giving every user (from curious outsider to core team veteran) exactly the access and tools they need.
+A single platform where Club Innogeeks at KIET Group of Institutions manages everything — recruitment, attendance, resources, and events — while giving every user (from curious outsider to core team veteran) exactly the access and tools they need. The platform is delivered as a **native Android app** (the primary client for all roles) backed by one Express API, plus a small **quiz website** students use to take the Round 1 recruitment test.
 
 ---
 
@@ -39,24 +39,25 @@ This creates fragmentation, data loss, no single source of truth, and a poor exp
 
 ### 4.1 Priya — 1st Year Applicant (Non-member)
 - Discovers Innogeeks through college orientation
-- Visits the public page to learn about domains
-- Registers for recruitment during the open window, pays ₹50 online
-- Checks status as she progresses through rounds
-- If selected: becomes a member, sees her domain resources and attendance
+- Installs the **Android app**, opens the public section to learn about domains
+- Registers for recruitment during the open window, pays ₹50 via UPI QR in the app
+- Takes the Round 1 quiz on the **quiz website** from a college computer
+- Checks status in the app as she progresses through rounds
+- If selected: becomes a member, sees her domain resources and attendance in the app
 
 ### 4.2 Arjun — 1st Year Club Member
 - Already cleared recruitment, assigned to Web domain
-- Wants to check resources his coordinator shared after class
-- Checks his own attendance before the minimum threshold warning
+- Uses the **Android app** to check resources his coordinator shared after class
+- Checks his own attendance in the app before the minimum threshold warning
 
 ### 4.3 Sneha — Coordinator (2nd Year, ML Domain)
-- Creates attendance sessions after each class she takes
-- Marks present/absent for her 12 ML domain students
+- Uses the **Android app** to create attendance sessions after each class she takes
+- Marks present/absent for her 12 ML domain students from her phone
 - Uploads PDFs and YouTube links organized by week
 - Reviews interview rubric scores during recruitment
 
 ### 4.4 Rahul — Core Team (3rd Year)
-- Reviews overall attendance across all domains
+- Uses the **Android app** to review overall attendance across all domains
 - Creates and manages major college-level events (hackathons, workshops)
 - Approves cash payment applications
 - Manually assigns roles to new coordinators
@@ -67,10 +68,11 @@ This creates fragmentation, data loss, no single source of truth, and a poor exp
 
 ### Recruitment
 - As an applicant, I can register during the open window using my KIET email
-- As an applicant, I can pay ₹50 via UPI QR inside the app and see my payment confirmed
+- As an applicant, I can pay ₹50 via UPI QR (Razorpay) inside the app and see my payment confirmed
 - As an applicant, I can pay in cash and have a coordinator approve my payment manually
+- As an applicant, I can take the Round 1 quiz on the quiz website and have my result recorded automatically
 - As an applicant, I can see my current status (payment pending → round 1 → round 2 → selected/rejected)
-- As a coordinator, I can mark which applicants passed Round 1 (Moodle test)
+- As a coordinator, I can see who passed Round 1 (auto-scored by the quiz site)
 - As a coordinator, I can score and mark candidates during Round 2 interviews
 - As core team, I can open and close the recruitment window
 - As core team, I can view all applications with filters by domain, status, payment method
@@ -122,11 +124,11 @@ This creates fragmentation, data loss, no single source of truth, and a poor exp
 
 ## 7. Out of Scope (v1.0)
 
-- In-app direct messaging or chat
+- In-app direct messaging or chat (architecture is WebSocket-ready for a future release)
 - Push notifications (email only)
-- Moodle integration (Round 1 result is manually entered)
+- **iOS app** — Android only in v1.0
+- Standalone web frontend for members/organizers — the Android app is the client (the only website is the recruitment quiz site)
 - Automated payment settlement/reconciliation
-- Mobile app (web-responsive only)
 - Alumni portal (4th year core team uses the same core team role)
 
 ---

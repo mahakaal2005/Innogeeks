@@ -63,15 +63,16 @@
 
 ---
 
-### US-011 — Applicant pays via UPI
+### US-011 — Applicant pays via UPI (Razorpay)
 **As an** applicant,  
-**I want to** pay the ₹50 fee by scanning a UPI QR code in the app,  
-**So that** my application moves to Round 1 qualified status.
+**I want to** pay the ₹50 fee by scanning a Razorpay UPI QR code in the app,  
+**So that** my application moves to Round 1 qualified status automatically.
 
 **Acceptance Criteria:**
-- UPI QR code displayed after registration
-- Applicant uploads payment screenshot as proof
-- Coordinator/core team reviews and approves → status changes to `round1_qualified`
+- Razorpay UPI QR code displayed after registration (backend creates the order with an idempotency key)
+- Applicant pays via any UPI app
+- Razorpay webhook (signature-verified) auto-updates status to `round1_qualified` — no manual review, no screenshot
+- Payment is idempotent (a retry never double-charges or double-approves)
 - Applicant sees updated status on their dashboard
 
 ---
@@ -96,22 +97,22 @@
 **So that** I know what to do next.
 
 **Acceptance Criteria:**
-- Dashboard shows current status clearly: `registered` → `payment_pending` → `round1_qualified` → `round2_qualified` → `selected` / `rejected`
-- Each stage shows what happens next (e.g., "Check your email for Round 1 test link")
-- Status updates in real time (on page refresh at minimum)
+- Dashboard shows current status clearly: `registered` → `round1_qualified` → `round2_qualified` → `selected` / `rejected`
+- Each stage shows what happens next (e.g., "Take the Round 1 quiz on the quiz website")
+- Status updates on refresh at minimum
 
 ---
 
-### US-014 — Coordinator marks Round 1 results
+### US-014 — Round 1 quiz results (auto-scored)
 **As a** coordinator,  
-**I want to** mark which applicants passed the Moodle test (Round 1),  
-**So that** they can be invited for the interview.
+**I want to** see which applicants passed the Round 1 quiz (taken on the quiz website),  
+**So that** I can invite the qualified ones for the interview.
 
 **Acceptance Criteria:**
-- Coordinator sees list of `round1_qualified` applicants in their domain
-- Can mark each as `round1_cleared` or `round1_failed`
-- Bulk action available (select all → mark)
-- Status change is logged with timestamp and marker identity
+- Applicant takes the Round 1 quiz on the quiz website (same API, Clerk auth)
+- On submission the backend auto-scores and sets `round1_cleared` or `round1_failed` — no manual marking
+- Coordinator sees the list of `round1_cleared` applicants in their domain
+- Each result is logged with timestamp and the applicant's score
 
 ---
 

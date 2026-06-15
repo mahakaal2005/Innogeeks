@@ -8,7 +8,7 @@
 
 ## What is the MVP?
 
-The MVP is the smallest version of the platform that delivers real value to the club from day one. It covers the three most time-sensitive pain points: recruitment (happens once a year, urgent), attendance (happens every week), and resources (needed immediately after each class). Events are included at a basic level. The public page is always included.
+The MVP is the smallest version of the platform that delivers real value to the club from day one. It ships as a **native Android app** (the client for all four roles), one **Express backend API**, and a **quiz website** for the Round 1 recruitment test. It covers the three most time-sensitive pain points: recruitment (happens once a year, urgent), attendance (happens every week), and resources (needed immediately after each class). Events are included at a basic level. The public section is always included.
 
 ---
 
@@ -16,23 +16,28 @@ The MVP is the smallest version of the platform that delivers real value to the 
 
 ### ✅ Included in MVP
 
+#### Platform
+- **Android app** (Kotlin + Compose) — primary client for all 4 roles
+- **Backend API** (Express + PostgreSQL) — shared by app and quiz site
+- **Quiz website** (React + Vite) — Round 1 test on the same API
+
 #### Authentication & Roles
-- Email + password login (Clerk)
+- Login via Clerk (KIET email for applicants), used by the Android app
 - 4 roles: public, member (1st year), coordinator, core_team
-- Core team manually assigns coordinator and core_team roles via admin panel
+- Core team manually assigns coordinator and core_team roles via admin tools
 - Member role auto-assigned after recruitment Round 2 clearance
 
-#### Public Club Page
+#### Public Club Section (Android)
 - Club description and 5 domains overview
 - Upcoming events list (read-only)
 - Recruitment open/closed banner
 
 #### Recruitment
 - Registration form (name, roll no., KIET email `@kiet.edu`, domain choice)
-- UPI QR code payment flow (manual verification step) → status: `round1_qualified`
+- **Razorpay UPI QR** payment flow in-app → status: `round1_qualified`
 - Cash payment flow → status: `cash_pending` → manual approval by coordinator/core team
 - Applicant status tracker (which round they're on)
-- Coordinator/core team: mark Round 1 pass/fail
+- **Round 1 quiz** on the quiz website — auto-scored, auto-updates `round1_status`
 - Coordinator/core team: score and mark Round 2 interview
 - Core team: open/close recruitment window
 - Core team: view all applications with domain and status filters
@@ -62,11 +67,11 @@ The MVP is the smallest version of the platform that delivers real value to the 
 ### ❌ Deferred to v1.1+
 
 - Custom event team composition rules (e.g., "min 1 member per team") — v1.1
-- Automated Razorpay payment gateway integration — v1.1 (UPI QR + cash in MVP)
 - Drag-and-drop folder reordering — v1.1 (manual order index in MVP)
 - Email notifications — v1.1
 - Attendance export (CSV/PDF report) — v1.1
-- Moodle API integration — deferred indefinitely (manual entry)
+- In-app chat — future (architecture is WebSocket-ready)
+- iOS app — not planned
 - Alumni/4th year special view — v1.1
 
 ---
@@ -105,21 +110,23 @@ CORE TEAM (superset of coordinator)
 
 | Phase | Work | Estimated Time |
 |---|---|---|
-| 1 | Auth + role system + DB schema | 2 days |
-| 2 | Public page + club info | 1 day |
-| 3 | Recruitment flow (form + payment + status) | 3 days |
-| 4 | Attendance module | 2 days |
-| 5 | Resources module | 2 days |
-| 6 | Events module (basic) | 2 days |
-| 7 | Core team admin panel (roles, window toggle) | 1 day |
-| 8 | QA + polish | 2 days |
-| **Total** | | **~15 days** |
+| 1 | Backend: DB schema + auth + RBAC + OpenAPI contract | 4 days |
+| 2 | Backend: recruitment + payment (Razorpay) + attendance + resources + events APIs | 6 days |
+| 3 | Backend: security hardening, indexes, caching, transactions | 2 days |
+| 4 | Quiz website (Round 1 test, auto-scoring) | 3 days |
+| 5 | Android: project setup, modules, auth, navigation, theme | 4 days |
+| 6 | Android: public + recruitment + payment screens | 4 days |
+| 7 | Android: attendance + resources + events screens | 5 days |
+| 8 | Android: admin tools (roles, window toggle) | 2 days |
+| 9 | End-to-end QA + polish across all 3 deployables | 4 days |
+| **Total** | | **~34 days (≈ +3 weeks vs. web-only)** |
 
 ---
 
 ## Definition of Done (MVP)
 
-- [ ] All 4 roles can log in and see role-appropriate UI
+- [ ] Android app builds and runs; all 4 roles can log in and see role-appropriate UI
+- [ ] Quiz website auto-scores Round 1 and updates application status via the API
 - [ ] Recruitment flow works end-to-end (register → pay → round 1 → round 2 → member)
 - [ ] Coordinator can create a session and mark attendance; member sees their record
 - [ ] Coordinator can upload a PDF/link; member can access it

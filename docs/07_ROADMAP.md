@@ -6,21 +6,24 @@
 
 ---
 
-## Phase 1 — MVP (v1.0) | Target: ~15 days
+## Phase 1 — MVP (v1.0) | Target: ~34 days
 
-**Goal:** Launch a working platform for the next recruitment cycle.
+**Goal:** Launch a working platform — Android app + backend API + quiz site — for the next recruitment cycle.
 
-| Module | Features |
+| Deployable / Module | Features |
 |---|---|
+| **Backend API** | Express + PostgreSQL, OpenAPI contract, RBAC, security hardening, indexes, transactions |
+| **Android app** | Kotlin + Compose (MVVM/Clean Arch), offline-first, primary client for all 4 roles |
+| **Quiz website** | React + Vite, Round 1 test, auto-scoring → updates `round1_status` via the same API |
 | Auth | Clerk login, 4 roles, role assignment by core team |
-| Public Page | Club info, domains, events listing, recruitment banner |
-| Recruitment | Registration form, UPI QR + cash payment, status tracker, Round 1/2 marking, window toggle |
+| Public Section | Club info, domains, events listing, recruitment banner (in app) |
+| Recruitment | Registration form, **Razorpay UPI QR** + cash payment, status tracker, Round 1 quiz + Round 2 marking, window toggle |
 | Attendance | Session creation, mark attendance, member/coordinator/core views |
 | Resources | Domain folders (2 levels), PDF upload, link upload, folder rename/reorder |
 | Events | Create event, set scope (open/members), public listing, user registration, post-event attendance |
-| Admin | Role management panel, role change audit log |
+| Admin | Role management, role change audit log |
 
-**Milestone:** First recruitment cycle processed entirely in-app (zero Google Forms)
+**Milestone:** First recruitment cycle processed entirely in-app (zero Google Forms), with Round 1 auto-scored on the quiz site
 
 ---
 
@@ -34,7 +37,6 @@
 | Attendance export | Download attendance grid as CSV or PDF for any domain/session range |
 | Custom event team rules | Define "min 1 member per team" and team size for hackathons |
 | Drag-and-drop folder reorder | Visual reorganization of resource folders |
-| Razorpay integration | Real payment gateway instead of manual QR screenshot flow |
 | Recruitment analytics | Funnel view: registered → paid → round1 → round2 → selected per domain |
 | Search | Global search across resources, events, and members |
 
@@ -61,8 +63,8 @@
 
 | Feature | Description |
 |---|---|
-| Mobile app (Expo) | Native iOS/Android app for attendance on the go |
-| Moodle integration | Auto-import Round 1 test scores from Moodle API |
+| iOS app | Native iOS client (Android ships in v1.0; iOS deferred to v2.0) |
+| In-app chat | Real-time chat via Socket.io + Redis (API is already WebSocket-ready) |
 | Alumni view | 4th year specific lightweight view — event history, mentoring connections |
 | Internal announcements | Core team posts club-wide announcements visible to all logged-in users |
 | Domain sub-communities | Each domain has a mini-feed, pinned resources, coordinator intro |
@@ -76,10 +78,10 @@ These were considered but intentionally not planned for any release yet:
 
 | Feature | Reason Deferred |
 |---|---|
-| In-app chat / messaging | High complexity, low immediate value — WhatsApp handles this adequately for now |
-| Automated Moodle Round 1 selection | Moodle API access needs institutional cooperation |
+| In-app chat / messaging | Deferred to v2.0; the API is intentionally WebSocket-ready so it can be added without redesign |
 | 4th year alumni-specific role | 4th year = core team role in MVP; special view deferred to v2.0 |
-| Payment reconciliation reports | Requires Razorpay integration (v1.1) first |
+| iOS app | Android-only in v1.0; iOS deferred to v2.0 |
+| Payment reconciliation reports | Built on top of the v1.0 Razorpay integration |
 
 ---
 
@@ -87,8 +89,14 @@ These were considered but intentionally not planned for any release yet:
 
 | Date | Decision | Reason |
 |---|---|---|
-| June 2026 | UPI QR + manual screenshot verification for MVP, not Razorpay | Razorpay requires business registration; faster to ship with manual flow |
+| June 2026 | Razorpay UPI QR in MVP (not manual screenshots) | Automated, verifiable, idempotent payments; removes manual review for UPI |
+| June 2026 | Android native app is the primary client; no web frontend for members/organizers | User requirement; one app + one API + one quiz site |
+| June 2026 | Round 1 is an online quiz on a separate website using the same API (no Moodle, no Firebase/Supabase) | Auto-scores and updates status; one backend is the single source of truth |
+| June 2026 | Kotlin 2.4.0 + Compose BOM 2026.05.00 | Latest stable verified June 2026 |
+| June 2026 | KSP over KAPT | KSP is the modern standard; KAPT is deprecated and slower |
+| June 2026 | Navigation 3 over Navigation 2 | Nav3 is the new stable standard with app-owned back stack + type-safe routes |
+| June 2026 | MVVM + Clean Architecture, offline-first (Room single source of truth) | Testable, scalable, works offline |
+| June 2026 | Architecture WebSocket-ready (stateless API + JWT) | In-app chat can be added later via Socket.io without redesign |
+| June 2026 | Scale target 5,000+ users (PgBouncer, Redis, indexes, pagination) | Production-grade scalability from day one |
 | June 2026 | Max 2 levels of resource folder depth | Prevents over-nesting; coordinators confirmed this is sufficient |
-| June 2026 | Moodle Round 1 results entered manually | No Moodle API access; manual entry is the accurate flow |
 | June 2026 | 4th year uses core_team role | No functional difference needed in MVP; simplifies role system |
-| June 2026 | No in-app chat in any near-term phase | Club uses WhatsApp effectively; chat is high effort for low delta |
