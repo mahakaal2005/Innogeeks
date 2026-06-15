@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "8T6QrcA9BqvhUvcuQk5oy"
+uri = "file://docs/10_USER_FLOWS.md"
+type = "text"
+title = "User Flows — all user types (exact)"
