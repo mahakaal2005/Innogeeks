@@ -102,6 +102,77 @@ export const AssignMemberRoleResponse = zod.object({
 
 
 /**
+ * @summary Open or close the recruitment window for an academic year (core_team only)
+ */
+
+
+
+export const SetRecruitmentWindowBody = zod.object({
+  "action": zod.enum(['open', 'close']),
+  "academicYear": zod.string().min(1)
+})
+
+export const SetRecruitmentWindowResponse = zod.object({
+  "success": zod.boolean(),
+  "isOpen": zod.boolean()
+})
+
+
+/**
+ * @summary Approve a cash payment application (coordinator/core_team, domain-gated)
+ */
+export const ApproveCashPaymentBody = zod.object({
+  "applicationId": zod.string().uuid()
+})
+
+export const ApproveCashPaymentResponse = zod.object({
+  "success": zod.boolean()
+})
+
+
+/**
+ * @summary Record Round 2 interview outcome (coordinator/core_team, domain-gated)
+ */
+export const reviewRound2BodyNotesMax = 2000;
+
+
+
+export const ReviewRound2Body = zod.object({
+  "applicationId": zod.string().uuid(),
+  "outcome": zod.enum(['cleared', 'failed']),
+  "score": zod.record(zod.string(), zod.number()).optional().describe('Rubric scores keyed by criterion name'),
+  "notes": zod.string().max(reviewRound2BodyNotesMax).optional()
+})
+
+export const ReviewRound2Response = zod.object({
+  "success": zod.boolean(),
+  "newStatus": zod.string()
+})
+
+
+/**
+ * @summary Change any user's role and domain with audit log (core_team only)
+ */
+export const setUserRoleBodyReasonMax = 500;
+
+
+
+export const SetUserRoleBody = zod.object({
+  "userId": zod.string().uuid(),
+  "role": zod.enum(['public', 'member', 'coordinator', 'core_team']),
+  "domain": zod.enum(['android', 'web', 'ml', 'iot', 'arvr']).nullish(),
+  "reason": zod.string().max(setUserRoleBodyReasonMax).optional()
+})
+
+export const SetUserRoleResponse = zod.object({
+  "success": zod.boolean(),
+  "userId": zod.string().uuid(),
+  "role": zod.string(),
+  "domain": zod.string().nullish()
+})
+
+
+/**
  * @summary Generate a signed upload signature for Cloudinary
  */
 

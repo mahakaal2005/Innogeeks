@@ -5,6 +5,7 @@ export interface AuthUser {
   id: string;
   email: string;
   role?: string;
+  domain?: string | null;
 }
 
 declare global {
@@ -39,23 +40,37 @@ export async function requireAuth(
   next();
 }
 
-export async function requireCoreTeam(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-): Promise<void> {
-  await requireAuth(req, res, async () => {
-    const { data: profile } = await supabaseAdmin
-      .from("profiles")
-      .select("role")
-      .eq("id", req.user!.id)
-      .maybeSingle();
-
-    if (profile?.role !== "core_team") {
-      res.status(403).json({ error: "core_team role required" });
-      return;
-    }
-    req.user!.role = profile.role;
-    next();
-  });
+async function fetchProfile(
+  userId: string,
+): Promise<{ role: string; domain: string | null } | null> {
+  const { data } = await supabaseAdmin
+    .from("profiles")
+    .select("role, domain")
+    .eq("id", userId)
+    .maybeSingle();
+  return data ?? null;
 }
+
+export function requireRole(allowedRoles: string[]) {
+  return async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> => {
+    await requireAuth(req, res, async () => {
+      const profile = await fetchProfile(req.user!.id);
+      if (!profile || !allowedRoles.includes(profile.role)) {
+        res.status(403).json({
+          error: `Requires one of: [${allowedRoles.join(", ")}]`,
+        });
+        return;
+      }
+      req.user!.role = profile.role;
+      req.user!.domain = profile.domain;
+      next();
+    });
+  };
+}
+
+export const requireCoreTeam = requireRole(["core_team"]);
+export const requireCoordinator = requireRole(["coordinator", "core_team"]);

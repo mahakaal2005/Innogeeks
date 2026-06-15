@@ -15,7 +15,9 @@ tags:
   - name: quiz
     description: Quiz delivery and scoring
   - name: recruitment
-    description: Round2 role assignment
+    description: Recruitment lifecycle — window, payments, Round1/Round2, role assignment
+  - name: admin
+    description: Core team admin operations
   - name: cloudinary
     description: Cloudinary upload signing
 
@@ -168,6 +170,124 @@ paths:
           $ref: "#/components/responses/Forbidden"
         "409":
           $ref: "#/components/responses/Conflict"
+
+  /recruitment/window:
+    post:
+      operationId: setRecruitmentWindow
+      tags: [recruitment]
+      summary: Open or close the recruitment window for an academic year (core_team only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecruitmentWindowRequest"
+      responses:
+        "200":
+          description: Window state updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecruitmentWindowResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+  /recruitment/approve-cash:
+    post:
+      operationId: approveCashPayment
+      tags: [recruitment]
+      summary: Approve a cash payment application (coordinator/core_team, domain-gated)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApproveCashRequest"
+      responses:
+        "200":
+          description: Cash payment approved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /recruitment/review-round2:
+    post:
+      operationId: reviewRound2
+      tags: [recruitment]
+      summary: Record Round 2 interview outcome (coordinator/core_team, domain-gated)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReviewRound2Request"
+      responses:
+        "200":
+          description: Round 2 review recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReviewRound2Response"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /admin/set-role:
+    post:
+      operationId: setUserRole
+      tags: [admin]
+      summary: Change any user's role and domain with audit log (core_team only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetRoleRequest"
+      responses:
+        "200":
+          description: Role updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SetRoleResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
 
   /cloudinary/sign:
     post:
@@ -404,3 +524,92 @@ components:
         folder:
           type: string
       required: [signature, timestamp, apiKey, cloudName, folder]
+
+    RecruitmentWindowRequest:
+      type: object
+      properties:
+        action:
+          type: string
+          enum: [open, close]
+        academicYear:
+          type: string
+          minLength: 1
+      required: [action, academicYear]
+
+    RecruitmentWindowResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        isOpen:
+          type: boolean
+      required: [success, isOpen]
+
+    ApproveCashRequest:
+      type: object
+      properties:
+        applicationId:
+          type: string
+          format: uuid
+      required: [applicationId]
+
+    ReviewRound2Request:
+      type: object
+      properties:
+        applicationId:
+          type: string
+          format: uuid
+        outcome:
+          type: string
+          enum: [cleared, failed]
+        score:
+          type: object
+          additionalProperties:
+            type: number
+          description: Rubric scores keyed by criterion name
+        notes:
+          type: string
+          maxLength: 2000
+      required: [applicationId, outcome]
+
+    ReviewRound2Response:
+      type: object
+      properties:
+        success:
+          type: boolean
+        newStatus:
+          type: string
+      required: [success, newStatus]
+
+    SetRoleRequest:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        role:
+          type: string
+          enum: [public, member, coordinator, core_team]
+        domain:
+          type: string
+          enum: [android, web, ml, iot, arvr]
+          nullable: true
+        reason:
+          type: string
+          maxLength: 500
+      required: [userId, role]
+
+    SetRoleResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        userId:
+          type: string
+          format: uuid
+        role:
+          type: string
+        domain:
+          type: string
+          nullable: true
+      required: [success, userId, role]

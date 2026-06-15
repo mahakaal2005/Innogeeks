@@ -99,6 +99,92 @@ export interface CloudinarySignResponse {
   folder: string;
 }
 
+export type RecruitmentWindowRequestAction = typeof RecruitmentWindowRequestAction[keyof typeof RecruitmentWindowRequestAction];
+
+
+export const RecruitmentWindowRequestAction = {
+  open: 'open',
+  close: 'close',
+} as const;
+
+export interface RecruitmentWindowRequest {
+  action: RecruitmentWindowRequestAction;
+  /** @minLength 1 */
+  academicYear: string;
+}
+
+export interface RecruitmentWindowResponse {
+  success: boolean;
+  isOpen: boolean;
+}
+
+export interface ApproveCashRequest {
+  applicationId: string;
+}
+
+export type ReviewRound2RequestOutcome = typeof ReviewRound2RequestOutcome[keyof typeof ReviewRound2RequestOutcome];
+
+
+export const ReviewRound2RequestOutcome = {
+  cleared: 'cleared',
+  failed: 'failed',
+} as const;
+
+/**
+ * Rubric scores keyed by criterion name
+ */
+export type ReviewRound2RequestScore = {[key: string]: number};
+
+export interface ReviewRound2Request {
+  applicationId: string;
+  outcome: ReviewRound2RequestOutcome;
+  /** Rubric scores keyed by criterion name */
+  score?: ReviewRound2RequestScore;
+  /** @maxLength 2000 */
+  notes?: string;
+}
+
+export interface ReviewRound2Response {
+  success: boolean;
+  newStatus: string;
+}
+
+export type SetRoleRequestRole = typeof SetRoleRequestRole[keyof typeof SetRoleRequestRole];
+
+
+export const SetRoleRequestRole = {
+  public: 'public',
+  member: 'member',
+  coordinator: 'coordinator',
+  core_team: 'core_team',
+} as const;
+
+export type SetRoleRequestDomain = typeof SetRoleRequestDomain[keyof typeof SetRoleRequestDomain] | null;
+
+
+export const SetRoleRequestDomain = {
+  android: 'android',
+  web: 'web',
+  ml: 'ml',
+  iot: 'iot',
+  arvr: 'arvr',
+} as const;
+
+export interface SetRoleRequest {
+  userId: string;
+  role: SetRoleRequestRole;
+  domain?: SetRoleRequestDomain;
+  /** @maxLength 500 */
+  reason?: string;
+}
+
+export interface SetRoleResponse {
+  success: boolean;
+  userId: string;
+  role: string;
+  domain?: string | null;
+}
+
 /**
  * Request validation failed
  */

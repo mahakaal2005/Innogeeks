@@ -27,4 +27,8 @@ Consumers who need TypeScript types use `z.infer<typeof SchemeName>` — no sepa
 
 **Why:** Orval generates types specifically so you can use `z.infer<>` — the barrel just needs the Zod schemas, not the redundant type re-exports.
 
-**How to apply:** After any `pnpm --filter @workspace/api-spec run codegen`, verify `lib/api-zod/src/index.ts` still only has the single `export * from "./generated/api"` line.
+**Permanent fix (2025-06):** The codegen script in `lib/api-spec/package.json` now runs a node one-liner immediately after orval to overwrite the barrel:
+```json
+"codegen": "orval --config ./orval.config.ts && node -e \"require('fs').writeFileSync('../../lib/api-zod/src/index.ts', \\\"export * from './generated/api';\\\\n\\\")\" && pnpm -w run typecheck:libs"
+```
+This is the durable fix — do not remove it. Never manually edit `lib/api-zod/src/index.ts`.

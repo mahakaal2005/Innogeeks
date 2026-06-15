@@ -5,6 +5,8 @@ import { supabaseAdmin } from "../lib/supabase";
 
 const router = Router();
 
+const KIET_EMAIL_DOMAIN = "@kiet.edu";
+
 const SubmitQuizSchema = z.object({
   email: z.email(),
   applicationId: z.uuid().optional(),
@@ -16,7 +18,9 @@ router.get("/quiz/:quizId", async (req, res) => {
 
   const { data: quiz, error: quizErr } = await supabaseAdmin
     .from("quizzes")
-    .select("id, title, description, domain, academic_year, time_limit_seconds")
+    .select(
+      "id, title, description, domain, academic_year, time_limit_seconds, passing_score",
+    )
     .eq("id", quizId)
     .eq("is_published", true)
     .maybeSingle();
@@ -58,18 +62,38 @@ router.post("/quiz/:quizId/submit", quizLimiter, async (req, res) => {
   }
   const { email, applicationId, answers } = parsed.data;
 
-  const { data: existing } = await supabaseAdmin
-    .from("quiz_submissions")
-    .select("id")
-    .eq("quiz_id", quizId)
-    .eq("email", email)
-    .maybeSingle();
-
-  if (existing) {
-    res
-      .status(409)
-      .json({ error: "Quiz already submitted for this email" });
+  if (!email.endsWith(KIET_EMAIL_DOMAIN)) {
+    res.status(400).json({
+      error: `Only ${KIET_EMAIL_DOMAIN} emails may submit quizzes`,
+    });
     return;
+  }
+
+  if (applicationId) {
+    const { data: app } = await supabaseAdmin
+      .from("recruitment_applications")
+      .select("id, email, payment_status, round1_status")
+      .eq("id", applicationId)
+      .maybeSingle();
+
+    if (!app) {
+      res.status(404).json({ error: "Application not found" });
+      return;
+    }
+    if (app.email !== email) {
+      res.status(400).json({ error: "Email does not match application" });
+      return;
+    }
+    if (app.payment_status !== "approved") {
+      res
+        .status(403)
+        .json({ error: "Payment not approved — cannot take quiz yet" });
+      return;
+    }
+    if (app.round1_status !== "pending") {
+      res.status(409).json({ error: "Round 1 already attempted" });
+      return;
+    }
   }
 
   const { data: questions, error: qErr } = await supabaseAdmin
@@ -113,36 +137,42 @@ router.post("/quiz/:quizId/submit", quizLimiter, async (req, res) => {
     });
 
   if (subErr) {
+    if (subErr.code === "23505") {
+      res
+        .status(409)
+        .json({ error: "Quiz already submitted for this email" });
+      return;
+    }
     req.log.error({ subErr }, "Failed to save submission");
     res.status(500).json({ error: "Failed to save submission" });
     return;
   }
 
-  if (applicationId && passed) {
-    await supabaseAdmin
+  if (applicationId) {
+    const newRound1Status = passed ? "cleared" : "failed";
+    const newStatus = passed ? "round1_qualified" : undefined;
+
+    const update: Record<string, string> = {
+      round1_status: newRound1Status,
+      updated_at: new Date().toISOString(),
+    };
+    if (newStatus) update["status"] = newStatus;
+
+    const { error: updateErr } = await supabaseAdmin
       .from("recruitment_applications")
-      .update({
-        round1_status: "cleared",
-        status: "round1_qualified",
-        updated_at: new Date().toISOString(),
-      })
+      .update(update)
       .eq("id", applicationId)
       .eq("email", email);
-  } else if (applicationId && !passed) {
-    await supabaseAdmin
-      .from("recruitment_applications")
-      .update({
-        round1_status: "failed",
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", applicationId)
-      .eq("email", email);
+
+    if (updateErr) {
+      req.log.error(
+        { updateErr, applicationId },
+        "Quiz scored but application status update failed",
+      );
+    }
   }
 
-  req.log.info(
-    { quizId, email, score, total, passed },
-    "Quiz submission recorded",
-  );
+  req.log.info({ quizId, email, score, total, passed }, "Quiz scored");
   res.status(201).json({ score, total, passed });
 });
 

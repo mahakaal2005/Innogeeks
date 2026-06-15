@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.2.0
  */
 
+export * from './approveCashRequest';
 export * from './assignRoleRequest';
 export * from './cloudinarySignRequest';
 export * from './cloudinarySignResponse';
@@ -23,7 +24,18 @@ export * from './quizSubmitRequest';
 export * from './quizSubmitRequestAnswers';
 export * from './quizSubmitResponse';
 export * from './razorpayWebhookBody';
+export * from './recruitmentWindowRequest';
+export * from './recruitmentWindowRequestAction';
+export * from './recruitmentWindowResponse';
+export * from './reviewRound2Request';
+export * from './reviewRound2RequestOutcome';
+export * from './reviewRound2RequestScore';
+export * from './reviewRound2Response';
 export * from './serviceUnavailableResponse';
+export * from './setRoleRequest';
+export * from './setRoleRequestDomain';
+export * from './setRoleRequestRole';
+export * from './setRoleResponse';
 export * from './successResponse';
 export * from './unauthorizedResponse';
 export * from './validationErrorResponse';

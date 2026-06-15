@@ -20,6 +20,7 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  ApproveCashRequest,
   AssignRoleRequest,
   CloudinarySignRequest,
   CloudinarySignResponse,
@@ -33,7 +34,13 @@ import type {
   QuizSubmitRequest,
   QuizSubmitResponse,
   RazorpayWebhookBody,
+  RecruitmentWindowRequest,
+  RecruitmentWindowResponse,
+  ReviewRound2Request,
+  ReviewRound2Response,
   ServiceUnavailableResponse,
+  SetRoleRequest,
+  SetRoleResponse,
   SuccessResponse,
   UnauthorizedResponse,
   ValidationErrorResponse,
@@ -490,6 +497,290 @@ export const useAssignMemberRole = <TError = ErrorType<ValidationErrorResponse |
         TContext
       > => {
       return useMutation(getAssignMemberRoleMutationOptions(options));
+    }
+
+export const getSetRecruitmentWindowUrl = () => {
+
+
+
+
+  return `/api/recruitment/window`
+}
+
+/**
+ * @summary Open or close the recruitment window for an academic year (core_team only)
+ */
+export const setRecruitmentWindow = async (recruitmentWindowRequest: RecruitmentWindowRequest, options?: RequestInit): Promise<RecruitmentWindowResponse> => {
+
+  return customFetch<RecruitmentWindowResponse>(getSetRecruitmentWindowUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      recruitmentWindowRequest,)
+  }
+);}
+
+
+
+
+export const getSetRecruitmentWindowMutationOptions = <TError = ErrorType<ValidationErrorResponse | UnauthorizedResponse | ForbiddenResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setRecruitmentWindow>>, TError,{data: BodyType<RecruitmentWindowRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof setRecruitmentWindow>>, TError,{data: BodyType<RecruitmentWindowRequest>}, TContext> => {
+
+const mutationKey = ['setRecruitmentWindow'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setRecruitmentWindow>>, {data: BodyType<RecruitmentWindowRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  setRecruitmentWindow(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetRecruitmentWindowMutationResult = NonNullable<Awaited<ReturnType<typeof setRecruitmentWindow>>>
+    export type SetRecruitmentWindowMutationBody = BodyType<RecruitmentWindowRequest>
+    export type SetRecruitmentWindowMutationError = ErrorType<ValidationErrorResponse | UnauthorizedResponse | ForbiddenResponse>
+
+    /**
+ * @summary Open or close the recruitment window for an academic year (core_team only)
+ */
+export const useSetRecruitmentWindow = <TError = ErrorType<ValidationErrorResponse | UnauthorizedResponse | ForbiddenResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setRecruitmentWindow>>, TError,{data: BodyType<RecruitmentWindowRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof setRecruitmentWindow>>,
+        TError,
+        {data: BodyType<RecruitmentWindowRequest>},
+        TContext
+      > => {
+      return useMutation(getSetRecruitmentWindowMutationOptions(options));
+    }
+
+export const getApproveCashPaymentUrl = () => {
+
+
+
+
+  return `/api/recruitment/approve-cash`
+}
+
+/**
+ * @summary Approve a cash payment application (coordinator/core_team, domain-gated)
+ */
+export const approveCashPayment = async (approveCashRequest: ApproveCashRequest, options?: RequestInit): Promise<SuccessResponse> => {
+
+  return customFetch<SuccessResponse>(getApproveCashPaymentUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      approveCashRequest,)
+  }
+);}
+
+
+
+
+export const getApproveCashPaymentMutationOptions = <TError = ErrorType<ValidationErrorResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse | ConflictResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveCashPayment>>, TError,{data: BodyType<ApproveCashRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof approveCashPayment>>, TError,{data: BodyType<ApproveCashRequest>}, TContext> => {
+
+const mutationKey = ['approveCashPayment'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof approveCashPayment>>, {data: BodyType<ApproveCashRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  approveCashPayment(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ApproveCashPaymentMutationResult = NonNullable<Awaited<ReturnType<typeof approveCashPayment>>>
+    export type ApproveCashPaymentMutationBody = BodyType<ApproveCashRequest>
+    export type ApproveCashPaymentMutationError = ErrorType<ValidationErrorResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse | ConflictResponse>
+
+    /**
+ * @summary Approve a cash payment application (coordinator/core_team, domain-gated)
+ */
+export const useApproveCashPayment = <TError = ErrorType<ValidationErrorResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse | ConflictResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof approveCashPayment>>, TError,{data: BodyType<ApproveCashRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof approveCashPayment>>,
+        TError,
+        {data: BodyType<ApproveCashRequest>},
+        TContext
+      > => {
+      return useMutation(getApproveCashPaymentMutationOptions(options));
+    }
+
+export const getReviewRound2Url = () => {
+
+
+
+
+  return `/api/recruitment/review-round2`
+}
+
+/**
+ * @summary Record Round 2 interview outcome (coordinator/core_team, domain-gated)
+ */
+export const reviewRound2 = async (reviewRound2Request: ReviewRound2Request, options?: RequestInit): Promise<ReviewRound2Response> => {
+
+  return customFetch<ReviewRound2Response>(getReviewRound2Url(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      reviewRound2Request,)
+  }
+);}
+
+
+
+
+export const getReviewRound2MutationOptions = <TError = ErrorType<ValidationErrorResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse | ConflictResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reviewRound2>>, TError,{data: BodyType<ReviewRound2Request>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof reviewRound2>>, TError,{data: BodyType<ReviewRound2Request>}, TContext> => {
+
+const mutationKey = ['reviewRound2'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reviewRound2>>, {data: BodyType<ReviewRound2Request>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  reviewRound2(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReviewRound2MutationResult = NonNullable<Awaited<ReturnType<typeof reviewRound2>>>
+    export type ReviewRound2MutationBody = BodyType<ReviewRound2Request>
+    export type ReviewRound2MutationError = ErrorType<ValidationErrorResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse | ConflictResponse>
+
+    /**
+ * @summary Record Round 2 interview outcome (coordinator/core_team, domain-gated)
+ */
+export const useReviewRound2 = <TError = ErrorType<ValidationErrorResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse | ConflictResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reviewRound2>>, TError,{data: BodyType<ReviewRound2Request>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof reviewRound2>>,
+        TError,
+        {data: BodyType<ReviewRound2Request>},
+        TContext
+      > => {
+      return useMutation(getReviewRound2MutationOptions(options));
+    }
+
+export const getSetUserRoleUrl = () => {
+
+
+
+
+  return `/api/admin/set-role`
+}
+
+/**
+ * @summary Change any user's role and domain with audit log (core_team only)
+ */
+export const setUserRole = async (setRoleRequest: SetRoleRequest, options?: RequestInit): Promise<SetRoleResponse> => {
+
+  return customFetch<SetRoleResponse>(getSetUserRoleUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      setRoleRequest,)
+  }
+);}
+
+
+
+
+export const getSetUserRoleMutationOptions = <TError = ErrorType<ValidationErrorResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setUserRole>>, TError,{data: BodyType<SetRoleRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof setUserRole>>, TError,{data: BodyType<SetRoleRequest>}, TContext> => {
+
+const mutationKey = ['setUserRole'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof setUserRole>>, {data: BodyType<SetRoleRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  setUserRole(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type SetUserRoleMutationResult = NonNullable<Awaited<ReturnType<typeof setUserRole>>>
+    export type SetUserRoleMutationBody = BodyType<SetRoleRequest>
+    export type SetUserRoleMutationError = ErrorType<ValidationErrorResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse>
+
+    /**
+ * @summary Change any user's role and domain with audit log (core_team only)
+ */
+export const useSetUserRole = <TError = ErrorType<ValidationErrorResponse | UnauthorizedResponse | ForbiddenResponse | NotFoundResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof setUserRole>>, TError,{data: BodyType<SetRoleRequest>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof setUserRole>>,
+        TError,
+        {data: BodyType<SetRoleRequest>},
+        TContext
+      > => {
+      return useMutation(getSetUserRoleMutationOptions(options));
     }
 
 export const getSignCloudinaryUploadUrl = () => {

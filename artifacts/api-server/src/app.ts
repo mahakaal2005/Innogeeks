@@ -11,22 +11,39 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS ?? "")
   .map((o) => o.trim())
   .filter(Boolean);
 
+const IS_PROD = process.env.NODE_ENV === "production";
+
+if (IS_PROD && ALLOWED_ORIGINS.length === 0) {
+  logger.warn(
+    "ALLOWED_ORIGINS is not set in production — all origins will be blocked by CORS. Set ALLOWED_ORIGINS to your quiz site domain.",
+  );
+}
+
 const app: Express = express();
 
 app.use(helmet());
 
 app.use(
   cors({
-    origin:
-      ALLOWED_ORIGINS.length > 0
-        ? (origin, cb) => {
-            if (!origin || ALLOWED_ORIGINS.includes(origin)) {
-              cb(null, true);
-            } else {
-              cb(new Error("Not allowed by CORS"));
-            }
-          }
-        : true,
+    origin: (origin, cb) => {
+      if (!origin) {
+        cb(null, true);
+        return;
+      }
+      if (ALLOWED_ORIGINS.length === 0) {
+        if (IS_PROD) {
+          cb(new Error("CORS: no allowed origins configured"));
+        } else {
+          cb(null, true);
+        }
+        return;
+      }
+      if (ALLOWED_ORIGINS.includes(origin)) {
+        cb(null, true);
+      } else {
+        cb(new Error(`CORS: origin ${origin} not allowed`));
+      }
+    },
     credentials: true,
   }),
 );
@@ -51,13 +68,13 @@ app.use(
 
 app.use(
   express.json({
-    limit: "256kb",
+    limit: "10mb",
     verify: (req: express.Request & { rawBody?: Buffer }, _res, buf) => {
       req.rawBody = buf;
     },
   }),
 );
-app.use(express.urlencoded({ extended: true, limit: "256kb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 app.use(generalLimiter);
 
