@@ -6,6 +6,8 @@ import recruitmentRouter from "./recruitment";
 import recruitmentAdminRouter from "./recruitment-admin";
 import adminRouter from "./admin";
 import cloudinaryRouter from "./cloudinary";
+import clubInfoRouter from "./club-info";
+import configRouter from "./config";
 
 const router: IRouter = Router();
 
@@ -16,5 +18,7 @@ router.use(recruitmentRouter);
 router.use(recruitmentAdminRouter);
 router.use(adminRouter);
 router.use(cloudinaryRouter);
+router.use(clubInfoRouter);
+router.use(configRouter);
 
 export default router;

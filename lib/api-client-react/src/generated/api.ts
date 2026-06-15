@@ -24,12 +24,15 @@ import type {
   AssignRoleRequest,
   CloudinarySignRequest,
   CloudinarySignResponse,
+  ClubInfoContent,
+  ClubInfoResponse,
   ConflictResponse,
   CreateOrderRequest,
   CreateOrderResponse,
   ForbiddenResponse,
   HealthStatus,
   NotFoundResponse,
+  PublicConfig,
   QuizEligibility,
   QuizEmailInput,
   QuizResponse,
@@ -1004,5 +1007,234 @@ export const useSignCloudinaryUpload = <TError = ErrorType<ValidationErrorRespon
         TContext
       > => {
       return useMutation(getSignCloudinaryUploadMutationOptions(options));
+    }
+
+export const getGetPublicConfigUrl = () => {
+
+
+
+
+  return `/api/public-config`
+}
+
+/**
+ * Returns public-safe configuration the browser needs to initialise a Supabase client for admin login. The anon key is designed to be exposed to clients; row-level security protects the data.
+
+ * @summary Public client configuration (Supabase URL + anon key)
+ */
+export const getPublicConfig = async ( options?: RequestInit): Promise<PublicConfig> => {
+
+  return customFetch<PublicConfig>(getGetPublicConfigUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetPublicConfigQueryKey = () => {
+    return [
+    `/api/public-config`
+    ] as const;
+    }
+
+
+export const getGetPublicConfigQueryOptions = <TData = Awaited<ReturnType<typeof getPublicConfig>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPublicConfig>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetPublicConfigQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getPublicConfig>>> = ({ signal }) => getPublicConfig({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getPublicConfig>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetPublicConfigQueryResult = NonNullable<Awaited<ReturnType<typeof getPublicConfig>>>
+export type GetPublicConfigQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Public client configuration (Supabase URL + anon key)
+ */
+
+export function useGetPublicConfig<TData = Awaited<ReturnType<typeof getPublicConfig>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getPublicConfig>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetPublicConfigQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getGetClubInfoUrl = () => {
+
+
+
+
+  return `/api/club-info`
+}
+
+/**
+ * Returns the editable club-info content, or null content when nothing has been published yet (clients should fall back to their built-in defaults).
+
+ * @summary Get the public club-info page content
+ */
+export const getClubInfo = async ( options?: RequestInit): Promise<ClubInfoResponse> => {
+
+  return customFetch<ClubInfoResponse>(getGetClubInfoUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetClubInfoQueryKey = () => {
+    return [
+    `/api/club-info`
+    ] as const;
+    }
+
+
+export const getGetClubInfoQueryOptions = <TData = Awaited<ReturnType<typeof getClubInfo>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getClubInfo>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetClubInfoQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getClubInfo>>> = ({ signal }) => getClubInfo({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getClubInfo>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetClubInfoQueryResult = NonNullable<Awaited<ReturnType<typeof getClubInfo>>>
+export type GetClubInfoQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Get the public club-info page content
+ */
+
+export function useGetClubInfo<TData = Awaited<ReturnType<typeof getClubInfo>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getClubInfo>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetClubInfoQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+
+export const getUpdateClubInfoUrl = () => {
+
+
+
+
+  return `/api/club-info`
+}
+
+/**
+ * @summary Replace the club-info page content (core team only)
+ */
+export const updateClubInfo = async (clubInfoContent: ClubInfoContent, options?: RequestInit): Promise<ClubInfoResponse> => {
+
+  return customFetch<ClubInfoResponse>(getUpdateClubInfoUrl(),
+  {
+    ...options,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      clubInfoContent,)
+  }
+);}
+
+
+
+
+export const getUpdateClubInfoMutationOptions = <TError = ErrorType<ValidationErrorResponse | UnauthorizedResponse | ForbiddenResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateClubInfo>>, TError,{data: BodyType<ClubInfoContent>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateClubInfo>>, TError,{data: BodyType<ClubInfoContent>}, TContext> => {
+
+const mutationKey = ['updateClubInfo'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateClubInfo>>, {data: BodyType<ClubInfoContent>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateClubInfo(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateClubInfoMutationResult = NonNullable<Awaited<ReturnType<typeof updateClubInfo>>>
+    export type UpdateClubInfoMutationBody = BodyType<ClubInfoContent>
+    export type UpdateClubInfoMutationError = ErrorType<ValidationErrorResponse | UnauthorizedResponse | ForbiddenResponse>
+
+    /**
+ * @summary Replace the club-info page content (core team only)
+ */
+export const useUpdateClubInfo = <TError = ErrorType<ValidationErrorResponse | UnauthorizedResponse | ForbiddenResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateClubInfo>>, TError,{data: BodyType<ClubInfoContent>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateClubInfo>>,
+        TError,
+        {data: BodyType<ClubInfoContent>},
+        TContext
+      > => {
+      return useMutation(getUpdateClubInfoMutationOptions(options));
     }
 

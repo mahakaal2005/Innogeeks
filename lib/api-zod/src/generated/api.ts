@@ -229,3 +229,112 @@ export const SignCloudinaryUploadResponse = zod.object({
 })
 
 
+/**
+ * Returns public-safe configuration the browser needs to initialise a Supabase client for admin login. The anon key is designed to be exposed to clients; row-level security protects the data.
+
+ * @summary Public client configuration (Supabase URL + anon key)
+ */
+export const GetPublicConfigResponse = zod.object({
+  "supabaseUrl": zod.string().nullable(),
+  "supabaseAnonKey": zod.string().nullable()
+})
+
+
+/**
+ * Returns the editable club-info content, or null content when nothing has been published yet (clients should fall back to their built-in defaults).
+
+ * @summary Get the public club-info page content
+ */
+export const GetClubInfoResponse = zod.object({
+  "content": zod.object({
+  "hero": zod.object({
+  "badge": zod.string(),
+  "titleLead": zod.string(),
+  "titleHighlight": zod.string(),
+  "description": zod.string(),
+  "imageUrl": zod.string().nullable()
+}),
+  "about": zod.object({
+  "heading": zod.string(),
+  "paragraphs": zod.array(zod.string())
+}),
+  "domains": zod.array(zod.object({
+  "key": zod.string(),
+  "label": zod.string(),
+  "blurb": zod.string()
+})),
+  "gallery": zod.array(zod.object({
+  "url": zod.string(),
+  "caption": zod.string()
+})),
+  "socials": zod.array(zod.object({
+  "label": zod.string(),
+  "value": zod.string(),
+  "href": zod.string()
+}))
+}).nullable()
+})
+
+
+/**
+ * @summary Replace the club-info page content (core team only)
+ */
+export const UpdateClubInfoBody = zod.object({
+  "hero": zod.object({
+  "badge": zod.string(),
+  "titleLead": zod.string(),
+  "titleHighlight": zod.string(),
+  "description": zod.string(),
+  "imageUrl": zod.string().nullable()
+}),
+  "about": zod.object({
+  "heading": zod.string(),
+  "paragraphs": zod.array(zod.string())
+}),
+  "domains": zod.array(zod.object({
+  "key": zod.string(),
+  "label": zod.string(),
+  "blurb": zod.string()
+})),
+  "gallery": zod.array(zod.object({
+  "url": zod.string(),
+  "caption": zod.string()
+})),
+  "socials": zod.array(zod.object({
+  "label": zod.string(),
+  "value": zod.string(),
+  "href": zod.string()
+}))
+})
+
+export const UpdateClubInfoResponse = zod.object({
+  "content": zod.object({
+  "hero": zod.object({
+  "badge": zod.string(),
+  "titleLead": zod.string(),
+  "titleHighlight": zod.string(),
+  "description": zod.string(),
+  "imageUrl": zod.string().nullable()
+}),
+  "about": zod.object({
+  "heading": zod.string(),
+  "paragraphs": zod.array(zod.string())
+}),
+  "domains": zod.array(zod.object({
+  "key": zod.string(),
+  "label": zod.string(),
+  "blurb": zod.string()
+})),
+  "gallery": zod.array(zod.object({
+  "url": zod.string(),
+  "caption": zod.string()
+})),
+  "socials": zod.array(zod.object({
+  "label": zod.string(),
+  "value": zod.string(),
+  "href": zod.string()
+}))
+}).nullable()
+})
+
+

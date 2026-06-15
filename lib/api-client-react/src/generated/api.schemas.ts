@@ -216,6 +216,53 @@ export interface SetRoleResponse {
   domain?: string | null;
 }
 
+export interface PublicConfig {
+  supabaseUrl: string | null;
+  supabaseAnonKey: string | null;
+}
+
+export interface ClubInfoHero {
+  badge: string;
+  titleLead: string;
+  titleHighlight: string;
+  description: string;
+  imageUrl: string | null;
+}
+
+export interface ClubInfoAbout {
+  heading: string;
+  paragraphs: string[];
+}
+
+export interface ClubInfoDomain {
+  key: string;
+  label: string;
+  blurb: string;
+}
+
+export interface ClubInfoGalleryItem {
+  url: string;
+  caption: string;
+}
+
+export interface ClubInfoSocial {
+  label: string;
+  value: string;
+  href: string;
+}
+
+export interface ClubInfoContent {
+  hero: ClubInfoHero;
+  about: ClubInfoAbout;
+  domains: ClubInfoDomain[];
+  gallery: ClubInfoGalleryItem[];
+  socials: ClubInfoSocial[];
+}
+
+export interface ClubInfoResponse {
+  content: ClubInfoContent | null;
+}
+
 /**
  * Request validation failed
  */

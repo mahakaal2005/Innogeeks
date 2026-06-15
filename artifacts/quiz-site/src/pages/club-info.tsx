@@ -1,74 +1,13 @@
 import React from "react";
 import { motion } from "framer-motion";
-import {
-  Smartphone,
-  Globe,
-  BrainCircuit,
-  Cpu,
-  Glasses,
-  Mail,
-  Instagram,
-  Linkedin,
-  Github,
-  Image as ImageIcon,
-  Users,
-  Rocket,
-  Sparkles,
-} from "lucide-react";
+import { Image as ImageIcon, Users, Rocket, Sparkles } from "lucide-react";
+import { useGetClubInfo } from "@workspace/api-client-react";
 import { Card, CardContent } from "@/components/ui/card";
-
-const DOMAINS = [
-  {
-    key: "android",
-    label: "App Development",
-    icon: Smartphone,
-    blurb: "Native Android apps built with Kotlin and modern tooling.",
-  },
-  {
-    key: "web",
-    label: "Web Development",
-    icon: Globe,
-    blurb: "Full-stack web experiences, from polished UI to robust APIs.",
-  },
-  {
-    key: "ml",
-    label: "Machine Learning",
-    icon: BrainCircuit,
-    blurb: "Data, models, and intelligent systems that learn.",
-  },
-  {
-    key: "iot",
-    label: "Internet of Things",
-    icon: Cpu,
-    blurb: "Hardware, sensors, and connected devices that talk.",
-  },
-  {
-    key: "arvr",
-    label: "AR / VR",
-    icon: Glasses,
-    blurb: "Immersive augmented and virtual reality worlds.",
-  },
-];
-
-const SOCIALS = [
-  { label: "Email", value: "innogeeks@kiet.edu", icon: Mail, href: "mailto:innogeeks@kiet.edu" },
-  { label: "Instagram", value: "@club.innogeeks", icon: Instagram, href: "#" },
-  { label: "LinkedIn", value: "Club Innogeeks", icon: Linkedin, href: "#" },
-  { label: "GitHub", value: "club-innogeeks", icon: Github, href: "#" },
-];
-
-function PhotoSlot({ label, className = "" }: { label: string; className?: string }) {
-  return (
-    <div
-      className={`flex flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-white/20 bg-white/5 text-center text-white/40 ${className}`}
-    >
-      <ImageIcon className="h-7 w-7" />
-      <span className="px-3 text-xs font-medium uppercase tracking-wider">
-        {label}
-      </span>
-    </div>
-  );
-}
+import {
+  DEFAULT_CLUB_INFO,
+  domainIcon,
+  socialIcon,
+} from "@/lib/club-info-content";
 
 const fadeUp = {
   initial: { opacity: 0, y: 24 },
@@ -77,7 +16,32 @@ const fadeUp = {
   transition: { duration: 0.5 },
 };
 
+function HeroPhoto({ url }: { url: string | null }) {
+  if (url) {
+    return (
+      <img
+        src={url}
+        alt="Club Innogeeks"
+        className="h-64 w-full rounded-2xl object-cover md:h-80"
+        data-testid="img-hero"
+      />
+    );
+  }
+  return (
+    <div className="flex h-64 flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-white/20 bg-white/5 text-center text-white/40 md:h-80">
+      <ImageIcon className="h-7 w-7" />
+      <span className="px-3 text-xs font-medium uppercase tracking-wider">
+        Add a hero photo of the club
+      </span>
+    </div>
+  );
+}
+
 export default function ClubInfo() {
+  const { data } = useGetClubInfo();
+  // Fall back to built-in placeholders until content is published.
+  const content = data?.content ?? DEFAULT_CLUB_INFO;
+
   return (
     <div className="w-full space-y-20 py-4">
       {/* Hero */}
@@ -90,18 +54,16 @@ export default function ClubInfo() {
         <div className="space-y-6">
           <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-white/70">
             <Sparkles className="h-3.5 w-3.5" />
-            KIET's Student Tech Community
+            {content.hero.badge}
           </span>
           <h1 className="text-4xl font-display font-bold leading-tight text-white sm:text-5xl">
-            Build. Learn.{" "}
+            {content.hero.titleLead}{" "}
             <span className="bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
-              Innovate.
+              {content.hero.titleHighlight}
             </span>
           </h1>
           <p className="max-w-md text-lg leading-relaxed text-white/60">
-            Club Innogeeks is the technical club of KIET — a community of makers,
-            coders, and tinkerers across five domains. We run workshops, build
-            real projects, and host events all year round.
+            {content.hero.description}
           </p>
           <div className="flex flex-wrap gap-6 pt-2">
             <div className="flex items-center gap-3">
@@ -109,7 +71,9 @@ export default function ClubInfo() {
                 <Users className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-xl font-bold text-white">5</p>
+                <p className="text-xl font-bold text-white">
+                  {content.domains.length}
+                </p>
                 <p className="text-xs uppercase tracking-wider text-white/50">
                   Tech Domains
                 </p>
@@ -128,7 +92,7 @@ export default function ClubInfo() {
             </div>
           </div>
         </div>
-        <PhotoSlot label="Add a hero photo of the club" className="h-64 md:h-80" />
+        <HeroPhoto url={content.hero.imageUrl} />
       </motion.section>
 
       {/* About */}
@@ -136,19 +100,13 @@ export default function ClubInfo() {
         <Card className="glass-panel border-white/10 bg-white/5">
           <CardContent className="space-y-4 p-8">
             <h2 className="text-2xl font-display font-semibold text-white">
-              About the club
+              {content.about.heading}
             </h2>
-            <p className="leading-relaxed text-white/60">
-              We're a student-run club at KIET focused on hands-on technology.
-              Members collaborate on projects, mentor juniors, compete in
-              hackathons, and ship things that matter. Whether you're just
-              starting out or already shipping side-projects, there's a place for
-              you here.
-            </p>
-            <p className="leading-relaxed text-white/60">
-              This is placeholder text — replace it with the club's real story,
-              mission, and achievements.
-            </p>
+            {content.about.paragraphs.map((para, i) => (
+              <p key={i} className="leading-relaxed text-white/60">
+                {para}
+              </p>
+            ))}
           </CardContent>
         </Card>
       </motion.section>
@@ -157,18 +115,16 @@ export default function ClubInfo() {
       <motion.section {...fadeUp} className="space-y-8">
         <div className="text-center">
           <h2 className="text-3xl font-display font-bold text-white">
-            Our five domains
+            Our domains
           </h2>
-          <p className="mt-2 text-white/50">
-            Pick where your curiosity takes you.
-          </p>
+          <p className="mt-2 text-white/50">Pick where your curiosity takes you.</p>
         </div>
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {DOMAINS.map((d, i) => {
-            const Icon = d.icon;
+          {content.domains.map((d, i) => {
+            const Icon = domainIcon(d.key);
             return (
               <motion.div
-                key={d.key}
+                key={d.key || i}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -179,9 +135,7 @@ export default function ClubInfo() {
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/20 to-purple-600/20 text-white">
                       <Icon className="h-6 w-6" />
                     </div>
-                    <h3 className="text-lg font-semibold text-white">
-                      {d.label}
-                    </h3>
+                    <h3 className="text-lg font-semibold text-white">{d.label}</h3>
                     <p className="text-sm leading-relaxed text-white/55">
                       {d.blurb}
                     </p>
@@ -194,24 +148,35 @@ export default function ClubInfo() {
       </motion.section>
 
       {/* Gallery */}
-      <motion.section {...fadeUp} className="space-y-8">
-        <div className="text-center">
-          <h2 className="text-3xl font-display font-bold text-white">
-            Moments from Innogeeks
-          </h2>
-          <p className="mt-2 text-white/50">
-            Add photos from workshops, events, and hackathons.
-          </p>
-        </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <PhotoSlot label="Event photo 1" className="h-44" />
-          <PhotoSlot label="Event photo 2" className="h-44" />
-          <PhotoSlot label="Event photo 3" className="h-44" />
-          <PhotoSlot label="Workshop photo" className="h-44" />
-          <PhotoSlot label="Team photo" className="h-44" />
-          <PhotoSlot label="Project showcase" className="h-44" />
-        </div>
-      </motion.section>
+      {content.gallery.length > 0 && (
+        <motion.section {...fadeUp} className="space-y-8">
+          <div className="text-center">
+            <h2 className="text-3xl font-display font-bold text-white">
+              Moments from Innogeeks
+            </h2>
+            <p className="mt-2 text-white/50">
+              Workshops, events, and hackathons.
+            </p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {content.gallery.map((item, i) => (
+              <figure key={i} className="space-y-2">
+                <img
+                  src={item.url}
+                  alt={item.caption || `Gallery photo ${i + 1}`}
+                  className="h-44 w-full rounded-2xl object-cover"
+                  data-testid={`img-gallery-${i}`}
+                />
+                {item.caption && (
+                  <figcaption className="text-center text-xs text-white/50">
+                    {item.caption}
+                  </figcaption>
+                )}
+              </figure>
+            ))}
+          </div>
+        </motion.section>
+      )}
 
       {/* Contact */}
       <motion.section {...fadeUp} className="space-y-8 pb-8">
@@ -224,11 +189,11 @@ export default function ClubInfo() {
           </p>
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {SOCIALS.map((s) => {
-            const Icon = s.icon;
+          {content.socials.map((s, i) => {
+            const Icon = socialIcon(s.label);
             return (
               <a
-                key={s.label}
+                key={s.label || i}
                 href={s.href}
                 className="glass-panel flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 transition-colors hover:border-white/20 hover:bg-white/[0.07]"
               >

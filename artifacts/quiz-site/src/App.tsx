@@ -5,10 +5,12 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 
 import { QuizProvider } from "@/lib/quiz-context";
+import { AdminAuthProvider } from "@/lib/admin-auth";
 import { Layout } from "@/components/layout";
 import Landing from "@/pages/landing";
 import Quiz from "@/pages/quiz";
 import Result from "@/pages/result";
+import AdminClubInfo from "@/pages/admin-club-info";
 
 const queryClient = new QueryClient();
 
@@ -19,6 +21,7 @@ function Router() {
         <Route path="/" component={Landing} />
         <Route path="/quiz" component={Quiz} />
         <Route path="/result" component={Result} />
+        <Route path="/admin/club-info" component={AdminClubInfo} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
@@ -29,11 +32,13 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <QuizProvider>
-          <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
-            <Router />
-          </WouterRouter>
-        </QuizProvider>
+        <AdminAuthProvider>
+          <QuizProvider>
+            <WouterRouter base={import.meta.env.BASE_URL.replace(/\/$/, "")}>
+              <Router />
+            </WouterRouter>
+          </QuizProvider>
+        </AdminAuthProvider>
         <Toaster />
       </TooltipProvider>
     </QueryClientProvider>

@@ -509,6 +509,9 @@ importers:
       '@replit/vite-plugin-runtime-error-modal':
         specifier: 'catalog:'
         version: 0.0.6
+      '@supabase/supabase-js':
+        specifier: ^2.108.1
+        version: 2.108.1
       '@tailwindcss/typography':
         specifier: ^0.5.15
         version: 0.5.20(tailwindcss@4.3.0)

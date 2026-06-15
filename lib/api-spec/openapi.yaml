@@ -20,6 +20,10 @@ tags:
     description: Core team admin operations
   - name: cloudinary
     description: Cloudinary upload signing
+  - name: club-info
+    description: Editable public club-info page content
+  - name: config
+    description: Public client configuration
 
 paths:
   /healthz:
@@ -357,6 +361,64 @@ paths:
           $ref: "#/components/responses/Unauthorized"
         "503":
           $ref: "#/components/responses/ServiceUnavailable"
+
+  /public-config:
+    get:
+      operationId: getPublicConfig
+      tags: [config]
+      summary: Public client configuration (Supabase URL + anon key)
+      description: >
+        Returns public-safe configuration the browser needs to initialise a
+        Supabase client for admin login. The anon key is designed to be exposed
+        to clients; row-level security protects the data.
+      responses:
+        "200":
+          description: Public configuration
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PublicConfig"
+
+  /club-info:
+    get:
+      operationId: getClubInfo
+      tags: [club-info]
+      summary: Get the public club-info page content
+      description: >
+        Returns the editable club-info content, or null content when nothing has
+        been published yet (clients should fall back to their built-in defaults).
+      responses:
+        "200":
+          description: Club info content
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClubInfoResponse"
+    put:
+      operationId: updateClubInfo
+      tags: [club-info]
+      summary: Replace the club-info page content (core team only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClubInfoContent"
+      responses:
+        "200":
+          description: Updated club info content
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClubInfoResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
 
 components:
   securitySchemes:
@@ -725,3 +787,102 @@ components:
           type: string
           nullable: true
       required: [success, userId, role]
+
+    PublicConfig:
+      type: object
+      properties:
+        supabaseUrl:
+          type: string
+          nullable: true
+        supabaseAnonKey:
+          type: string
+          nullable: true
+      required: [supabaseUrl, supabaseAnonKey]
+
+    ClubInfoHero:
+      type: object
+      properties:
+        badge:
+          type: string
+        titleLead:
+          type: string
+        titleHighlight:
+          type: string
+        description:
+          type: string
+        imageUrl:
+          type: string
+          nullable: true
+      required: [badge, titleLead, titleHighlight, description, imageUrl]
+
+    ClubInfoAbout:
+      type: object
+      properties:
+        heading:
+          type: string
+        paragraphs:
+          type: array
+          items:
+            type: string
+      required: [heading, paragraphs]
+
+    ClubInfoDomain:
+      type: object
+      properties:
+        key:
+          type: string
+        label:
+          type: string
+        blurb:
+          type: string
+      required: [key, label, blurb]
+
+    ClubInfoGalleryItem:
+      type: object
+      properties:
+        url:
+          type: string
+        caption:
+          type: string
+      required: [url, caption]
+
+    ClubInfoSocial:
+      type: object
+      properties:
+        label:
+          type: string
+        value:
+          type: string
+        href:
+          type: string
+      required: [label, value, href]
+
+    ClubInfoContent:
+      type: object
+      properties:
+        hero:
+          $ref: "#/components/schemas/ClubInfoHero"
+        about:
+          $ref: "#/components/schemas/ClubInfoAbout"
+        domains:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClubInfoDomain"
+        gallery:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClubInfoGalleryItem"
+        socials:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClubInfoSocial"
+      required: [hero, about, domains, gallery, socials]
+
+    ClubInfoResponse:
+      type: object
+      properties:
+        content:
+          oneOf:
+            - $ref: "#/components/schemas/ClubInfoContent"
+          nullable: true
+      required: [content]

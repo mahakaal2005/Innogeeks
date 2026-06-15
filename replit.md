@@ -26,7 +26,7 @@ KIET's tech club management platform — Supabase-native backend + thin trusted 
 ```
 artifacts/api-server/src/
   app.ts                    # Express setup (helmet, cors, rate-limit, 10MB body)
-  routes/                   # health, payments, quiz, recruitment, recruitment-admin, admin, cloudinary
+  routes/                   # health, payments, quiz, recruitment, recruitment-admin, admin, cloudinary, club-info, config
   middleware/auth.ts        # requireAuth, requireRole([...]), requireCoreTeam, requireCoordinator
   middleware/rateLimiter.ts # tiered rate limiters (general/payment/quiz)
   lib/supabase.ts           # supabaseAdmin singleton (service-role, bypasses RLS)
@@ -40,6 +40,7 @@ lib/api-zod/                # generated Zod validators
 supabase/migrations/
   001_schema.sql            # DDL — enums, tables, indexes (apply via Supabase SQL Editor)
   002_rls.sql               # RLS policies, profile trigger, assign_member_role RPC
+  003_club_info.sql         # club_info singleton table + RLS (public read, core_team write)
 
 docs/                       # architecture docs (PRD, TRP, system design, Android arch, etc.)
 .env.example                # all required env vars with descriptions
