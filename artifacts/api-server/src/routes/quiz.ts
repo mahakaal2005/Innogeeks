@@ -13,6 +13,181 @@ const SubmitQuizSchema = z.object({
   answers: z.record(z.string(), z.number().int().min(0)),
 });
 
+const ValidateEmailSchema = z.object({
+  email: z.email(),
+});
+
+router.post("/quiz/validate-email", quizLimiter, async (req, res) => {
+  const parsed = ValidateEmailSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: "A valid email is required" });
+    return;
+  }
+  const { email } = parsed.data;
+
+  if (!email.endsWith(KIET_EMAIL_DOMAIN)) {
+    res.status(400).json({
+      error: `Only ${KIET_EMAIL_DOMAIN} emails are allowed`,
+    });
+    return;
+  }
+
+  const { data: app, error: appErr } = await supabaseAdmin
+    .from("recruitment_applications")
+    .select("id, name, domain, academic_year, payment_status, round1_status")
+    .eq("email", email)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (appErr) {
+    req.log.error({ appErr }, "Failed to fetch application for email validation");
+    res.status(500).json({ error: "Database error" });
+    return;
+  }
+  if (!app) {
+    res.status(404).json({
+      error: "No recruitment application found for this email",
+    });
+    return;
+  }
+  if (app.payment_status !== "approved") {
+    res.status(403).json({
+      error:
+        "Your payment hasn't been approved yet. Complete payment before taking the quiz.",
+    });
+    return;
+  }
+
+  let quiz: {
+    id: string;
+    title: string;
+    description: string | null;
+    time_limit_seconds: number | null;
+    passing_score: number;
+  } | null = null;
+
+  const exact = await supabaseAdmin
+    .from("quizzes")
+    .select("id, title, description, time_limit_seconds, passing_score")
+    .eq("is_published", true)
+    .eq("domain", app.domain)
+    .eq("academic_year", app.academic_year)
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (exact.error) {
+    req.log.error(
+      { quizErr: exact.error },
+      "Failed to fetch quiz for email validation",
+    );
+    res.status(500).json({ error: "Database error" });
+    return;
+  }
+  quiz = exact.data;
+
+  if (!quiz) {
+    const fallback = await supabaseAdmin
+      .from("quizzes")
+      .select("id, title, description, time_limit_seconds, passing_score")
+      .eq("is_published", true)
+      .eq("domain", app.domain)
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (fallback.error) {
+      req.log.error(
+        { quizErr: fallback.error },
+        "Failed to fetch fallback quiz for email validation",
+      );
+      res.status(500).json({ error: "Database error" });
+      return;
+    }
+    quiz = fallback.data;
+  }
+
+  if (!quiz) {
+    res.status(404).json({
+      error: "No active quiz is available for your domain yet",
+    });
+    return;
+  }
+
+  const { count, error: countErr } = await supabaseAdmin
+    .from("quiz_questions")
+    .select("id", { count: "exact", head: true })
+    .eq("quiz_id", quiz.id);
+
+  if (countErr) {
+    req.log.error(
+      { countErr },
+      "Failed to count quiz questions for email validation",
+    );
+    res.status(500).json({ error: "Database error" });
+    return;
+  }
+
+  const questionCount = count ?? 0;
+
+  const base = {
+    applicationId: app.id,
+    applicantName: app.name,
+    quizId: quiz.id,
+    quizTitle: quiz.title,
+    quizDescription: quiz.description,
+    timeLimitSeconds: quiz.time_limit_seconds,
+    questionCount,
+    passingScore: quiz.passing_score,
+  };
+
+  if (app.round1_status !== "pending") {
+    const { data: submission, error: submissionErr } = await supabaseAdmin
+      .from("quiz_submissions")
+      .select("score, total, passed")
+      .eq("quiz_id", quiz.id)
+      .eq("email", email)
+      .maybeSingle();
+
+    if (submissionErr) {
+      req.log.error(
+        { submissionErr },
+        "Failed to fetch existing submission for email validation",
+      );
+    }
+
+    res.json({
+      ...base,
+      canTake: false,
+      alreadySubmitted: true,
+      result: submission
+        ? {
+            score: submission.score,
+            total: submission.total,
+            passed: submission.passed,
+          }
+        : null,
+    });
+    return;
+  }
+
+  if (questionCount === 0) {
+    res.status(404).json({
+      error:
+        "The quiz for your domain isn't ready yet. Please contact a coordinator.",
+    });
+    return;
+  }
+
+  res.json({
+    ...base,
+    canTake: true,
+    alreadySubmitted: false,
+    result: null,
+  });
+});
+
 router.get("/quiz/:quizId", async (req, res) => {
   const { quizId } = req.params;
 

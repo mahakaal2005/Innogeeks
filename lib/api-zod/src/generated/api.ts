@@ -50,6 +50,32 @@ export const RazorpayWebhookResponse = zod.object({
 
 
 /**
+ * @summary Validate a KIET email and return the quiz the applicant can take
+ */
+export const ValidateQuizEmailBody = zod.object({
+  "email": zod.string().email()
+})
+
+export const ValidateQuizEmailResponse = zod.object({
+  "canTake": zod.boolean(),
+  "alreadySubmitted": zod.boolean(),
+  "applicationId": zod.string().uuid(),
+  "applicantName": zod.string(),
+  "quizId": zod.string().uuid(),
+  "quizTitle": zod.string(),
+  "quizDescription": zod.string().nullish(),
+  "timeLimitSeconds": zod.number().nullish(),
+  "questionCount": zod.number(),
+  "passingScore": zod.number(),
+  "result": zod.object({
+  "score": zod.number(),
+  "total": zod.number(),
+  "passed": zod.boolean()
+}).nullish()
+})
+
+
+/**
  * @summary Fetch published quiz questions (no correct answers)
  */
 export const GetQuizParams = zod.object({

@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Innogeeks Quiz"
+version = "1.0.0"
+id = "artifacts/quiz-site"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 18714
+
+[services.development]
+run = "pnpm --filter @workspace/quiz-site run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/quiz-site", "run", "build" ]
+publicDir = "artifacts/quiz-site/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18714"
+BASE_PATH = "/"

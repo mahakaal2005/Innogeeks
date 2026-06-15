@@ -90,6 +90,31 @@ paths:
         "400":
           $ref: "#/components/responses/ValidationError"
 
+  /quiz/validate-email:
+    post:
+      operationId: validateQuizEmail
+      tags: [quiz]
+      summary: Validate a KIET email and return the quiz the applicant can take
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuizEmailInput"
+      responses:
+        "200":
+          description: Eligibility result with quiz metadata
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuizEligibility"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
   /quiz/{quizId}:
     get:
       operationId: getQuiz
@@ -414,6 +439,64 @@ components:
         idempotent:
           type: boolean
       required: [orderId]
+
+    QuizEmailInput:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+      required: [email]
+
+    QuizEligibility:
+      type: object
+      properties:
+        canTake:
+          type: boolean
+        alreadySubmitted:
+          type: boolean
+        applicationId:
+          type: string
+          format: uuid
+        applicantName:
+          type: string
+        quizId:
+          type: string
+          format: uuid
+        quizTitle:
+          type: string
+        quizDescription:
+          type: string
+          nullable: true
+        timeLimitSeconds:
+          type: integer
+          nullable: true
+        questionCount:
+          type: integer
+        passingScore:
+          type: integer
+        result:
+          type: object
+          nullable: true
+          properties:
+            score:
+              type: integer
+            total:
+              type: integer
+            passed:
+              type: boolean
+          required: [score, total, passed]
+      required:
+        [
+          canTake,
+          alreadySubmitted,
+          applicationId,
+          applicantName,
+          quizId,
+          quizTitle,
+          questionCount,
+          passingScore,
+        ]
 
     QuizQuestion:
       type: object

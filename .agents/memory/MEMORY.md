@@ -1,3 +1,1 @@
-- [Supabase connectivity from Replit](supabase-connectivity.md) — direct DB host is IPv6-only (unreachable); Supavisor pooler also unreachable (tenant not found even when project active); apply SQL via MCP/dashboard instead.
-- [Express API architecture](express-api-arch.md) — trusted server pattern: Razorpay+quiz scoring+role-assign+Cloudinary only; Supabase service role bypasses RLS; zod/v4 must be added as direct dependency to server artifacts.
-- [Orval codegen barrel conflict](orval-barrel.md) — orval zod split mode regenerates index.ts every codegen run adding types clash; fix: node one-liner in codegen script resets barrel after orval finishes.
+- [Quiz site no-login model](quiz-site-no-login.md) — Round 1 quiz uses KIET-email-only identity (no auth) by deliberate design; runs on invigilated college PCs. Don't "fix" it by adding login.

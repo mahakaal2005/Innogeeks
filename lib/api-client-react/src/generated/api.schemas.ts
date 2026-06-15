@@ -40,6 +40,30 @@ export interface CreateOrderResponse {
   idempotent?: boolean;
 }
 
+export interface QuizEmailInput {
+  email: string;
+}
+
+export type QuizEligibilityResult = {
+  score: number;
+  total: number;
+  passed: boolean;
+} | null;
+
+export interface QuizEligibility {
+  canTake: boolean;
+  alreadySubmitted: boolean;
+  applicationId: string;
+  applicantName: string;
+  quizId: string;
+  quizTitle: string;
+  quizDescription?: string | null;
+  timeLimitSeconds?: number | null;
+  questionCount: number;
+  passingScore: number;
+  result?: QuizEligibilityResult;
+}
+
 export interface QuizQuestion {
   id: string;
   question_text: string;

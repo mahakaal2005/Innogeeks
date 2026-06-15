@@ -30,6 +30,8 @@ import type {
   ForbiddenResponse,
   HealthStatus,
   NotFoundResponse,
+  QuizEligibility,
+  QuizEmailInput,
   QuizResponse,
   QuizSubmitRequest,
   QuizSubmitResponse,
@@ -277,6 +279,77 @@ export const useRazorpayWebhook = <TError = ErrorType<ValidationErrorResponse>,
         TContext
       > => {
       return useMutation(getRazorpayWebhookMutationOptions(options));
+    }
+
+export const getValidateQuizEmailUrl = () => {
+
+
+
+
+  return `/api/quiz/validate-email`
+}
+
+/**
+ * @summary Validate a KIET email and return the quiz the applicant can take
+ */
+export const validateQuizEmail = async (quizEmailInput: QuizEmailInput, options?: RequestInit): Promise<QuizEligibility> => {
+
+  return customFetch<QuizEligibility>(getValidateQuizEmailUrl(),
+  {
+    ...options,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', ...options?.headers },
+    body: JSON.stringify(
+      quizEmailInput,)
+  }
+);}
+
+
+
+
+export const getValidateQuizEmailMutationOptions = <TError = ErrorType<ValidationErrorResponse | ForbiddenResponse | NotFoundResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof validateQuizEmail>>, TError,{data: BodyType<QuizEmailInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+): UseMutationOptions<Awaited<ReturnType<typeof validateQuizEmail>>, TError,{data: BodyType<QuizEmailInput>}, TContext> => {
+
+const mutationKey = ['validateQuizEmail'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof validateQuizEmail>>, {data: BodyType<QuizEmailInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  validateQuizEmail(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ValidateQuizEmailMutationResult = NonNullable<Awaited<ReturnType<typeof validateQuizEmail>>>
+    export type ValidateQuizEmailMutationBody = BodyType<QuizEmailInput>
+    export type ValidateQuizEmailMutationError = ErrorType<ValidationErrorResponse | ForbiddenResponse | NotFoundResponse>
+
+    /**
+ * @summary Validate a KIET email and return the quiz the applicant can take
+ */
+export const useValidateQuizEmail = <TError = ErrorType<ValidationErrorResponse | ForbiddenResponse | NotFoundResponse>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof validateQuizEmail>>, TError,{data: BodyType<QuizEmailInput>}, TContext>, request?: SecondParameter<typeof customFetch>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof validateQuizEmail>>,
+        TError,
+        {data: BodyType<QuizEmailInput>},
+        TContext
+      > => {
+      return useMutation(getValidateQuizEmailMutationOptions(options));
     }
 
 export const getGetQuizUrl = (quizId: string,) => {
