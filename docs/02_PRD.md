@@ -9,7 +9,7 @@
 
 ## 1. Product Vision
 
-A single platform where Club Innogeeks at KIET Group of Institutions manages everything — recruitment, attendance, resources, and events — while giving every user (from curious outsider to core team veteran) exactly the access and tools they need. The platform is delivered as a **native Android app** (the primary client for all roles) backed by one Express API, plus a small **quiz website** students use to take the Round 1 recruitment test.
+A single platform where Club Innogeeks at KIET Group of Institutions manages everything — recruitment, attendance, resources, and events — while giving every user (from curious outsider to core team veteran) exactly the access and tools they need. The platform is delivered as a **native Android app** (the primary client for all roles) backed by a **Supabase-native backend** (managed Postgres + Auth + Row-Level Security) and a thin trusted Express server, plus a small **quiz website** students use to take the Round 1 recruitment test.
 
 ---
 

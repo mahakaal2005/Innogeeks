@@ -26,3 +26,11 @@ externalPort = 8080
 [[ports]]
 localPort = 8081
 externalPort = 80
+
+[userenv]
+
+[userenv.shared]
+SUPABASE_DB_HOST = "aws-0-ap-south-1.pooler.supabase.com"
+SUPABASE_DB_PORT = "5432"
+SUPABASE_DB_USER = "postgres.qdonxhtsydbtvvxvqajy"
+SUPABASE_DB_NAME = "postgres"

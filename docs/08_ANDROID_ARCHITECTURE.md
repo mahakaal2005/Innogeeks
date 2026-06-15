@@ -9,7 +9,7 @@
 
 ## 1. Overview
 
-The Club Innogeeks Android app is the **primary client** for all users — public visitors, 1st year members, coordinators, and core team. It connects to the shared Express API (same backend as the quiz site). It is built with Kotlin + Jetpack Compose using **MVVM + Clean Architecture**, with **KSP** for all annotation processing (no KAPT).
+The Club Innogeeks Android app is the **primary client** for all users — public visitors, 1st year members, coordinators, and core team. It connects **directly to Supabase** (Auth + Postgrest, guarded by RLS) for most data, and to a thin **trusted Express server** for payments, quiz take/submit, Round 2 → role assignment, and Cloudinary upload signing (same backend as the quiz site). It is built with Kotlin + Jetpack Compose using **MVVM + Clean Architecture**, with **KSP** for all annotation processing (no KAPT).
 
 iOS is **not** in scope. The quiz is **not** taken on this app — it is taken on the separate quiz website on college computers.
 
@@ -52,12 +52,12 @@ Three layers, strict dependency direction (UI → Domain → Data; Domain depend
 
 ```
 :app                  — Application class, Hilt setup, root NavHost, MainActivity
-:core:network         — Retrofit/OkHttp client, interceptors, API service interfaces, DTOs
+:core:network         — Supabase Kotlin SDK client (Auth + Postgrest) + Retrofit/OkHttp for trusted endpoints, interceptors, DTOs
 :core:database        — Room database, DAOs, entities, type converters
 :core:datastore       — EncryptedDataStore, preference keys (auth token, user prefs)
 :core:ui              — Compose theme, glassmorphism components, design tokens, shared widgets
 :core:common          — Result wrapper, dispatchers, extensions, constants
-:feature:auth         — Login (Clerk), token management, AuthViewModel
+:feature:auth         — Login (Supabase Auth), session/token management, AuthViewModel
 :feature:recruitment  — Registration form, Razorpay payment, status tracker
 :feature:attendance   — Session list, mark attendance, attendance summary
 :feature:resources    — Domain folder tree, resource viewer, upload
@@ -219,14 +219,14 @@ val certificatePinner = CertificatePinner.Builder()
 
 ---
 
-## 8. Authentication Flow (Clerk)
+## 8. Authentication Flow (Supabase Auth)
 
-1. User taps "Login" → app opens **Android Custom Tab** with Clerk's hosted sign-in (OAuth PKCE).
-2. On success, Clerk redirects to the app's deep link with the session token.
-3. App stores the JWT in **Encrypted DataStore**.
-4. Every API call attaches `Authorization: Bearer <jwt>` via the OkHttp interceptor.
-5. On 401, the interceptor triggers a silent refresh; if refresh fails, the user is routed to login.
-6. Logout clears DataStore + wipes the Room cache.
+1. User enters email + password → the **Supabase Kotlin SDK** signs in (`auth.signInWith(Email)`).
+2. Supabase returns an access token (JWT) + refresh token; the SDK manages the session.
+3. The app mirrors the JWT into **Encrypted DataStore** for the OkHttp interceptor used on trusted-server calls.
+4. Direct Supabase calls (Postgrest) are authorized by **RLS** using the session JWT; trusted-server calls attach `Authorization: Bearer <jwt>` via the interceptor.
+5. On token expiry, the SDK silently refreshes; if refresh fails, the user is routed to login.
+6. Logout clears the Supabase session + DataStore + wipes the Room cache.
 
 ---
 

@@ -12,10 +12,10 @@
 
 | Deployable / Module | Features |
 |---|---|
-| **Backend API** | Express + PostgreSQL, OpenAPI contract, RBAC, security hardening, indexes, transactions |
+| **Supabase backend** | Postgres + Auth + RLS (auto REST API); thin trusted Express server for payments, quiz scoring, Round 2 → role assignment, Cloudinary signing; OpenAPI contract, indexes, transactions |
 | **Android app** | Kotlin + Compose (MVVM/Clean Arch), offline-first, primary client for all 4 roles |
 | **Quiz website** | React + Vite, Round 1 test, auto-scoring → updates `round1_status` via the same API |
-| Auth | Clerk login, 4 roles, role assignment by core team |
+| Auth | Supabase Auth (email + password), 4 roles, RLS-enforced, role assignment by core team |
 | Public Section | Club info, domains, events listing, recruitment banner (in app) |
 | Recruitment | Registration form, **Razorpay UPI QR** + cash payment, status tracker, Round 1 quiz + Round 2 marking, window toggle |
 | Attendance | Session creation, mark attendance, member/coordinator/core views |
@@ -90,8 +90,11 @@ These were considered but intentionally not planned for any release yet:
 | Date | Decision | Reason |
 |---|---|---|
 | June 2026 | Razorpay UPI QR in MVP (not manual screenshots) | Automated, verifiable, idempotent payments; removes manual review for UPI |
-| June 2026 | Android native app is the primary client; no web frontend for members/organizers | User requirement; one app + one API + one quiz site |
-| June 2026 | Round 1 is an online quiz on a separate website using the same API (no Moodle, no Firebase/Supabase) | Auto-scores and updates status; one backend is the single source of truth |
+| June 2026 | Android native app is the primary client; no web frontend for members/organizers | User requirement; one app + one backend + one quiz site |
+| June 2026 | **Supabase-native backend** (managed Postgres + Auth + RLS + auto REST API) instead of self-managed Postgres + Clerk | Auth, authorization (RLS), and a REST API out of the box; clients query the DB directly and securely; far less server code to maintain at 5,000+ users |
+| June 2026 | **Thin trusted Express server** only for secret/trust operations (Razorpay, quiz scoring, Round 2 → role assignment, Cloudinary signing) | Everything else is handled directly by Supabase under RLS |
+| June 2026 | **Cloudinary** for file storage (PDFs/banners) instead of Replit Object Storage | Signed direct uploads, CDN delivery, no server proxying of files |
+| June 2026 | Round 1 is an online quiz on a separate website (auto-scored by the trusted server) | Auto-scores and updates status; Supabase is the single source of truth |
 | June 2026 | Kotlin 2.4.0 + Compose BOM 2026.05.00 | Latest stable verified June 2026 |
 | June 2026 | KSP over KAPT | KSP is the modern standard; KAPT is deprecated and slower |
 | June 2026 | Navigation 3 over Navigation 2 | Nav3 is the new stable standard with app-owned back stack + type-safe routes |

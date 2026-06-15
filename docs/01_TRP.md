@@ -1,15 +1,18 @@
 # Technical Requirements Plan (TRP)
 ## Club Innogeeks — Member & Club Management Platform
 
+**Version:** 2.0 (Supabase-native)
+
 ---
 
 ## 1. System Overview
 
-A platform for Club Innogeeks at KIET Group of Institutions, made up of three deployables sharing one backend:
+A platform for Club Innogeeks at KIET Group of Institutions, made up of three deployables on a **Supabase-native** backbone:
 
-1. **Backend API** (Express + PostgreSQL) — the single source of truth for all data.
-2. **Android app** (Kotlin + Jetpack Compose) — the **primary client** used by all four roles (public, member, coordinator, core team).
-3. **Quiz website** (React + Vite) — a lightweight site students open on college computers to take the Round 1 recruitment test; it auto-updates results back into the same backend.
+1. **Supabase backend** (managed PostgreSQL + Auth + Row-Level Security + auto-generated REST/Realtime API) — the single source of truth for all data and the primary authorization boundary.
+2. **Trusted Express server** (Node.js 24 + TypeScript) — a thin, stateless service for operations that need secrets or server-side trust: Razorpay payments, quiz auto-scoring, Round 2 → role assignment, and Cloudinary upload signing.
+3. **Android app** (Kotlin + Jetpack Compose) — the **primary client** for all four roles (public, member, coordinator, core team). Talks directly to Supabase (RLS-guarded) and to the trusted server for the few protected operations.
+4. **Quiz website** (React + Vite) — a lightweight site students open on college computers to take the Round 1 recruitment test; auto-scored by the trusted server.
 
 There is **no separate web frontend** for the main app — everything members and organizers do happens on the Android app. The platform handles recruitment (with payment), attendance tracking, resource sharing, event management, and the recruitment quiz.
 
@@ -36,18 +39,21 @@ There is **no separate web frontend** for the main app — everything members an
 | Manage user roles | — | — | — | ✅ |
 | View all recruitment applications | — | — | — | ✅ |
 
+All of the above is enforced by **Postgres RLS policies** (and mirrored by the trusted server for its service-role operations), not just by the client UI.
+
 ---
 
 ## 3. Authentication & Identity
 
-- **Login method:** Email + Password (KIET email — `@kiet.edu` — required for recruitment applicants)
-- **Public users:** Can register with any email to view club info and events
+- **Auth provider:** **Supabase Auth** (email + password; email confirmation). JWTs are issued by Supabase and verified by RLS (for direct access) and by the trusted server (for protected routes).
+- **Login method:** Email + Password. A KIET email (`@kiet.edu`) is required to submit a recruitment application (enforced server-side).
+- **Public users:** Can register with any email to view club info and events.
+- **Profiles:** Each `auth.users` row has a matching `public.profiles` row (`id = auth.users.id`) holding `role`, `domain`, and `year`. A Postgres trigger auto-creates the profile with role `public` on signup.
 - **Role assignment:**
-  - Public: Default on signup
-  - 1st Year Member: Assigned by core team after clearing Round 2 interview
-  - Coordinator: Manually assigned by core team via the admin tools (role stored in the platform's PostgreSQL DB)
-  - Core Team: Manually assigned by core team via the admin tools
-- **Auth provider:** Clerk (role-based). The role and domain are stored in the platform's own PostgreSQL DB and synced from Clerk via webhook on signup.
+  - Public: default on signup.
+  - 1st Year Member: auto-assigned after clearing Round 2 (atomic transaction on the trusted server).
+  - Coordinator / Core Team: assigned by core team via admin tools (RLS-guarded UPDATE on `profiles`, audited to `role_change_log`).
+- Role and domain are read from the database via `auth.uid()` and are **never** trusted from the client.
 
 ---
 
@@ -65,63 +71,49 @@ The five club domains, each treated as a distinct unit for attendance and resour
 ## 5. Core Modules
 
 ### 5.1 Recruitment Module
-- Registration form (name, roll no., KIET email, domain preference)
-- Payment gateway:
-  - UPI QR code payment → auto status: `payment_pending` → verified → `round1_qualified`
-  - Cash payment → status: `cash_pending` → manual approval by coordinator/core team → `round1_qualified`
-- Round 1: Online quiz taken on the **quiz website** (college computers). The quiz site uses the same backend API; on submission it auto-scores and updates `round1_status` (`cleared`/`failed`) — no manual entry.
-- Round 2: Interview — coordinators + core team mark candidates on defined rubrics, mark as `round2_cleared`
-- On clearing Round 2: system assigns `member` role + domain tag
-- Recruitment window: activatable/deactivatable by core team (off by default)
+- Registration form (name, roll no., KIET email, domain preference).
+- Payment:
+  - UPI QR via **Razorpay** (order created by the trusted server) → webhook-verified → `round1_qualified`.
+  - Cash → `cash_pending` → manual approval by coordinator/core team → `round1_qualified`.
+- Round 1: online quiz on the **quiz website**; the trusted server auto-scores on submission and updates `round1_status` (`cleared`/`failed`) — no manual entry.
+- Round 2: interview — coordinators + core team score on rubrics; on clear, the system assigns `member` role + domain (atomic).
+- Recruitment window: opened/closed by core team (off by default).
 
 ### 5.2 Attendance Module
-- Sessions created on-demand by coordinators (not predefined schedule)
-- Session properties: domain, date, topic/title, created by
-- Coordinator marks attendance for all domain students + marks their own
-- Students see their own attendance percentage and session history
-- Coordinators see full domain attendance grid
-- Core team sees all domains combined
+- Sessions created on-demand by coordinators (domain, date, title).
+- Coordinator marks attendance for domain students + self; members see their own percentage and history.
+- Coordinators see the full domain grid; core team sees all domains.
 
 ### 5.3 Resource Module
-- Organized by domain at the top level
-- Sub-folders creatable within each domain (e.g., Android > Week 1 Basics)
-- Folder reorganization (rename, reorder, move) by coordinator of that domain or core team
-- Resource types: PDF (file upload) and Link (URL)
-- All members (1st year, coordinators, core team) can view all domain resources
-- Upload restricted to coordinator (their domain) and core team
+- Organized by domain at the top level; sub-folders within each domain (max 2 levels).
+- Resource types: PDF (uploaded to **Cloudinary**) and Link (URL).
+- All members can view all domains; upload restricted to the domain's coordinator and core team.
 
 ### 5.4 Events Module
-- Events created by coordinators or core team
-- Event properties: title, description, date/time, venue, banner image, registration scope, team rules
-- Registration scope options:
-  - Open to all (including non-members)
-  - Club members only (1st year + coordinators + core team)
-  - Custom (e.g., hackathon with "at least 1 club member per team")
-- Everyone can view events publicly
-- Event attendance marking post-event by coordinator/core team
+- Created by coordinators/core team (title, description, date/time, venue, banner, registration scope).
+- Scope: open to all / members only.
+- Public event listing (no login). Post-event attendance marking by coordinator/core team.
 
 ### 5.5 Public Club Page
-- Club description, domains, achievements
-- Upcoming events listing
-- Recruitment status banner (open/closed)
-- No login required
+- Club description, domains, achievements; upcoming events; recruitment open/closed banner. No login required.
 
 ---
 
-### 6.1 Backend API
+## 6. Technology Stack
+
+### 6.1 Backend (Supabase-native)
 
 | Layer | Technology |
 |---|---|
-| Runtime | Node.js 24 + TypeScript 5.9 |
-| Framework | Express 5 |
-| Database | PostgreSQL + Drizzle ORM |
+| Data + Auth + API | **Supabase** — managed PostgreSQL, Supabase Auth, RLS, auto REST/Realtime |
+| Trusted server | Node.js 24 + TypeScript 5.9, Express 5 (stateless) |
+| ORM / migrations | Drizzle ORM + drizzle-kit (`push`); RLS & triggers applied as raw SQL |
 | Validation | Zod (`zod/v4`) + `drizzle-zod` |
-| Auth | Clerk (role-based), JWT verified server-side |
-| File Storage | Object Storage (Replit App Storage) for PDFs/banners |
-| Payments | Razorpay (UPI QR) + manual cash flow |
-| Security | Helmet v8, express-rate-limit v7, CORS, request size limits |
-| API Contract | OpenAPI spec → Orval codegen |
-| Hosting | Replit (dev) → Replit Deployments (prod) |
+| File Storage | **Cloudinary** (signed direct uploads for PDFs/banners) |
+| Payments | **Razorpay** (UPI QR) + manual cash flow |
+| Security | RLS (primary); Helmet v8, express-rate-limit v7, CORS, body limits (trusted server) |
+| API Contract | OpenAPI spec → Orval codegen (trusted endpoints) |
+| Hosting | Replit (dev) → Replit Deployments (prod); Supabase managed |
 
 ### 6.2 Android App (primary client)
 
@@ -132,7 +124,7 @@ The five club domains, each treated as a distinct unit for attendance and resour
 | Architecture | MVVM + Clean Architecture, multi-module |
 | DI | Hilt 2.57.1 (via KSP) |
 | Local DB | Room 2.8.4 (via KSP), offline-first single source of truth |
-| Network | Retrofit 3.0.0 + OkHttp 5.4.0 (cert pinning, auth interceptor) |
+| Backend access | **Supabase Kotlin SDK** (Auth + Postgrest, RLS-guarded) + Retrofit 3.0.0/OkHttp 5.4.0 for trusted endpoints (cert pinning, auth interceptor) |
 | Serialization | kotlinx.serialization 1.10.0 |
 | Async | Coroutines 1.11.0 + Flow |
 | Navigation | Navigation 3 (1.0.0), type-safe routes |
@@ -149,21 +141,24 @@ See `08_ANDROID_ARCHITECTURE.md` for the full Android architecture.
 | Frontend | React + Vite (TypeScript) |
 | Styling | Tailwind CSS + Glassmorphism theme (matches Android) |
 | State / Data | TanStack Query (React Query) |
-| Backend | Same Express API (no separate backend, no Firebase/Supabase) |
-| API Contract | Shared OpenAPI spec → Orval codegen |
+| Backend | **Supabase** (`supabase-js`, Auth) + trusted Express server for take/submit/scoring |
+| API Contract | Shared OpenAPI spec → Orval codegen (trusted endpoints) |
 
 ---
 
 ## 7. Data Models (High Level)
 
-- **User:** id, name, email, role (public/member/coordinator/core_team), domain, year, created_at
+- **Profile:** id (= auth.users.id), name, email, role (public/member/coordinator/core_team), domain, year, created_at
 - **RecruitmentApplication:** id, user_id, domain, payment_status, round1_status, round2_status, score, created_at
 - **AttendanceSession:** id, domain, title, date, created_by, created_at
 - **AttendanceRecord:** id, session_id, user_id, is_present, marked_by, created_at
-- **ResourceFolder:** id, domain, name, parent_folder_id, order_index, created_by
+- **ResourceFolder:** id, domain, name, parent_id, order_index, created_by
 - **Resource:** id, folder_id, domain, title, type (pdf/link), url, created_by, created_at
-- **Event:** id, title, description, date, venue, banner_url, registration_scope, created_by, created_at
-- **EventRegistration:** id, event_id, user_id, team_name, status, created_at
+- **Event:** id, title, description, date, venue, banner_url, registration_scope, status, created_by, created_at
+- **EventRegistration:** id, event_id, user_id, attended, created_at
+- **Quiz / QuizQuestion / QuizSubmission:** quiz metadata, questions (with hidden correct answer), one scored submission per email
+
+(See `05_SYSTEM_DESIGN.md` for the full schema; `lib/db/src/schema/` is the source of truth.)
 
 ---
 
@@ -174,7 +169,7 @@ See `08_ANDROID_ARCHITECTURE.md` for the full Android architecture.
 - KIET email validation on recruitment form (`@kiet.edu`)
 - Recruitment window toggle (on/off) controlled by core team
 - Role changes are audited (who changed what, when)
-- All file uploads virus-free (type/size validation: PDF max 10MB)
+- All file uploads type/size validated: PDF max 10MB
 - Designed to scale to **5,000+ users** without redesign
 
 ---
@@ -183,40 +178,39 @@ See `08_ANDROID_ARCHITECTURE.md` for the full Android architecture.
 
 | Layer | Control |
 |---|---|
-| HTTP headers | **Helmet v8** (CSP, HSTS, X-Frame-Options, no X-Powered-By) |
-| Rate limiting | **express-rate-limit v7** — global limit + stricter per-role limits on write/auth/payment routes |
-| CORS | Allow-list of known origins only (Android app native calls + quiz site domain); credentials restricted |
-| Auth | Clerk JWT verified on every protected route; role + domain loaded from DB, never trusted from the client |
-| Authorization | RBAC middleware (`requireRole`, `requireDomain`) on every non-public route |
-| Input validation | **Zod** schemas validate every request body, query, and param; reject on failure |
-| Request limits | JSON/body size caps (e.g., 1MB JSON, 10MB multipart for PDFs) to prevent payload DoS |
-| SQL injection | Parameterised queries only via **Drizzle ORM** — no string-concatenated SQL |
-| File uploads | Server-side MIME sniffing (not just extension), size cap, randomized storage keys |
-| Email validation | `@kiet.edu` enforced server-side (regex + domain check), not just client-side |
-| Secrets | All keys in environment variables; never in source or returned to clients |
+| Authorization (primary) | **Postgres RLS** on every table — default-deny, explicit per-role/domain policies; direct client access is only ever under RLS |
+| Auth | **Supabase Auth** JWT; verified by RLS for direct access and by the trusted server (`verifySupabaseJwt`) on protected routes; role/domain loaded from DB, never trusted from client |
+| HTTP headers | **Helmet v8** on the trusted server (CSP, HSTS, X-Frame-Options, no X-Powered-By) |
+| Rate limiting | **express-rate-limit v7** — global + stricter on `/payments`, `/quizzes/submit`, `/uploads` |
+| CORS | Allow-list of known origins (Android app + quiz site); credentials restricted |
+| Input validation | **Zod** schemas validate every trusted-route body/query/param; SQL injection prevented by Drizzle parameterised queries |
+| Request limits | JSON body cap (≈1MB) on the trusted server to prevent payload DoS |
+| File uploads | Signed **Cloudinary** uploads with server-enforced type/size and randomized public IDs |
+| Email validation | `@kiet.edu` enforced server-side (regex + domain check) |
+| Quiz integrity | Correct answers never leave the server; scoring is server-only |
+| Secrets | Supabase service-role key, Razorpay keys, Cloudinary secret only on the trusted server; never returned to clients |
 | Transport | HTTPS only in production; certificate pinning enforced by the Android client |
 
 ---
 
 ## 10. Scalability (5,000+ users)
 
-- **Stateless Express API** — no in-memory session state, so the API can scale horizontally behind a load balancer.
-- **PgBouncer connection pooling** — keeps a bounded pool of Postgres connections under high concurrency.
-- **Redis caching layer** — cache hot, read-heavy data (recruitment window status, attendance summaries, public events, session-auth lookups) with short TTLs and explicit invalidation on writes.
+- **Supabase connection pooling (Supavisor)** bounds Postgres connections under high concurrency.
+- **RLS pushes authorization into the database**, so ordinary reads/writes go client → Supabase directly with no app-tier fan-out.
+- **Stateless trusted server** — JWT-verified, no session state → horizontal scaling behind a load balancer.
 - **Key database indexes** (see System Design for the full table):
-  - `users(email)`, `users(domain)`, `users(role)`
+  - `profiles(email)`, `profiles(domain)`, `profiles(role)`
   - `attendance_records(session_id)`, `attendance_records(user_id)`
   - `recruitment_applications(status)`, `recruitment_applications(domain)`, `recruitment_applications(user_id)`
-  - `event_registrations(event_id)`, `resource_folders(domain, parent_id)`
-- **Pagination** on all list endpoints (applications, users, sessions) — never return unbounded result sets.
-- **WebSocket-ready** — because sessions are stateless and auth is JWT-based, real-time features (e.g., future in-app chat) can be added via Socket.io with a Redis adapter **without redesigning** the API.
+  - `event_registrations(event_id)`, `resource_folders(domain, parent_id)`, `quiz_submissions(quiz_id)`
+- **Pagination** on all list endpoints (PostgREST range / SDK `.range()`) — never unbounded result sets.
+- **Realtime-ready** — Supabase Realtime can add live features later without redesign.
 
 ---
 
 ## 11. Race Condition Prevention
 
-- **Database transactions** wrap every multi-table write so it is all-or-nothing. Example: marking Round 2 cleared → update application status → assign `member` role + domain — committed in a single transaction.
-- **`SELECT ... FOR UPDATE`** (row locking) when marking attendance, so two coordinators marking the same student in the same session cannot create a double write; combined with a `UNIQUE(session_id, user_id)` constraint as the final guard.
-- **Idempotency keys** on payment endpoints — a client-supplied key makes retries safe (a duplicate submit does not create a second payment record or double-approve).
-- **Unique constraints** as the last line of defense: `UNIQUE(session_id, user_id)` on attendance, `UNIQUE(event_id, user_id)` on event registration, `UNIQUE(user_id, academic_year)` on applications.
-- **Optimistic concurrency** on edits (e.g., recruitment window toggle) using `updated_at` checks to detect conflicting concurrent updates.
+- **Database transactions** on the trusted server wrap every multi-table write (e.g., Round 2 cleared → update application status → assign `member` role + domain) — all-or-nothing.
+- **Unique constraints** as the final guard: `UNIQUE(session_id, user_id)` (attendance), `UNIQUE(event_id, user_id)` (event registration), `UNIQUE(user_id, academic_year)` (applications), `UNIQUE(quiz_id, email)` (quiz submissions). Attendance marking uses upsert/`ON CONFLICT` (with row locking where a read-modify-write is required).
+- **Idempotency keys** on payment order creation; signature-verified, idempotent webhooks.
+- **Optimistic concurrency** on edits (e.g., recruitment window toggle) using `updated_at` checks.

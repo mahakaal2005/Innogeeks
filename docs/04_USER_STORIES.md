@@ -28,9 +28,9 @@
 **So that** I can register for events or apply for club membership.
 
 **Acceptance Criteria:**
-- Sign-up form: name, email, password
+- Sign-up form: name, email, password (Supabase Auth)
 - Email verified before access granted
-- Default role assigned: `public`
+- Default role assigned: `public` (profile auto-created via DB trigger on signup)
 - Recruitment applicants must use `@kiet.edu` email (validated on registration form)
 
 ---
@@ -109,7 +109,7 @@
 **So that** I can invite the qualified ones for the interview.
 
 **Acceptance Criteria:**
-- Applicant takes the Round 1 quiz on the quiz website (same API, Clerk auth)
+- Applicant takes the Round 1 quiz on the quiz website (Supabase Auth; auto-scored by the trusted server)
 - On submission the backend auto-scores and sets `round1_cleared` or `round1_failed` — no manual marking
 - Coordinator sees the list of `round1_cleared` applicants in their domain
 - Each result is logged with timestamp and the applicant's score

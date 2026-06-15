@@ -1,0 +1,1 @@
+- [Supabase connectivity from Replit](supabase-connectivity.md) — direct DB host is IPv6-only (unreachable); use Supavisor pooler host + `postgres.<ref>` user, build pool from discrete fields not URL.

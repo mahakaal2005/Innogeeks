@@ -8,7 +8,7 @@
 
 ## What is the MVP?
 
-The MVP is the smallest version of the platform that delivers real value to the club from day one. It ships as a **native Android app** (the client for all four roles), one **Express backend API**, and a **quiz website** for the Round 1 recruitment test. It covers the three most time-sensitive pain points: recruitment (happens once a year, urgent), attendance (happens every week), and resources (needed immediately after each class). Events are included at a basic level. The public section is always included.
+The MVP is the smallest version of the platform that delivers real value to the club from day one. It ships as a **native Android app** (the client for all four roles), a **Supabase-native backend** (Postgres + Auth + RLS) with a thin trusted Express server, and a **quiz website** for the Round 1 recruitment test. It covers the three most time-sensitive pain points: recruitment (happens once a year, urgent), attendance (happens every week), and resources (needed immediately after each class). Events are included at a basic level. The public section is always included.
 
 ---
 
@@ -18,11 +18,12 @@ The MVP is the smallest version of the platform that delivers real value to the 
 
 #### Platform
 - **Android app** (Kotlin + Compose) — primary client for all 4 roles
-- **Backend API** (Express + PostgreSQL) — shared by app and quiz site
-- **Quiz website** (React + Vite) — Round 1 test on the same API
+- **Supabase backend** (Postgres + Auth + RLS, auto REST API) — single source of truth, shared by app and quiz site
+- **Trusted Express server** — payments, quiz auto-scoring, Round 2 → role assignment, Cloudinary upload signing
+- **Quiz website** (React + Vite) — Round 1 test
 
 #### Authentication & Roles
-- Login via Clerk (KIET email for applicants), used by the Android app
+- Login via **Supabase Auth** (email + password; KIET email for applicants), used by the Android app and quiz site; RLS enforces all access
 - 4 roles: public, member (1st year), coordinator, core_team
 - Core team manually assigns coordinator and core_team roles via admin tools
 - Member role auto-assigned after recruitment Round 2 clearance
@@ -110,9 +111,9 @@ CORE TEAM (superset of coordinator)
 
 | Phase | Work | Estimated Time |
 |---|---|---|
-| 1 | Backend: DB schema + auth + RBAC + OpenAPI contract | 4 days |
-| 2 | Backend: recruitment + payment (Razorpay) + attendance + resources + events APIs | 6 days |
-| 3 | Backend: security hardening, indexes, caching, transactions | 2 days |
+| 1 | Backend: Supabase schema + Auth + RLS policies + triggers + OpenAPI contract | 4 days |
+| 2 | Trusted server: payments (Razorpay) + quiz scoring + Round 2 role assignment + Cloudinary signing | 6 days |
+| 3 | Backend: security hardening, indexes, transactions, RLS review | 2 days |
 | 4 | Quiz website (Round 1 test, auto-scoring) | 3 days |
 | 5 | Android: project setup, modules, auth, navigation, theme | 4 days |
 | 6 | Android: public + recruitment + payment screens | 4 days |
