@@ -1,0 +1,40 @@
+#11 - Quiz Site Test Window & Club Info Page
+What & Why
+The quiz website should behave as two different things depending on a control the core team owns:
+
+During the test window (a date the core team opens): it is the Round 1 test portal — only students who already registered through the Android app (and whose payment is approved) can take the quiz.
+Any other time (registrations/test not live): it shows a public club info page — about the club, what it does, the 5 domains, photos, and contact/socials — instead of the quiz.
+Today the site always shows the email-entry/quiz flow and never checks whether the test window is open, and there is no info page. This task makes the site window-aware and adds the info page. Most backend gating already exists (email must match a registered, payment-approved applicant; duplicate attempts are blocked at DB + API level) — the real gaps are the window check, a public status endpoint, and the info page.
+
+Done looks like
+When the core team has NOT opened the test, visiting the website shows a polished club info page (club intro, the 5 domains, photos, contact/links) — no quiz, no email box.
+When the core team OPENS the test for the test date, the website shows the existing Round 1 flow (enter KIET email → quiz → result).
+A student whose email is not a registered, payment-approved applicant still cannot take the test (unchanged).
+Even with a direct link, the quiz API refuses email validation and submission while the test window is closed.
+The core team can open/close the test from their existing admin control, and the website reflects the change without a redeploy.
+Out of scope
+Changing how students register or pay — that stays in the Android app.
+Quiz authoring/admin UI changes beyond the open/close control that already exists.
+Final marketing copy and real photographs — the page ships with placeholder content and clearly labelled image slots for the club to fill in later.
+Key decision
+"Test is live" is driven by a single core-team-owned control (reuse the existing recruitment-window open flag together with a published quiz for the active year). The website derives its mode from one new public status endpoint. Do not expose any admin-only route to the public site.
+
+Steps
+Public recruitment status endpoint — Add a public (no-auth) endpoint that reports whether the Round 1 test is currently live. Define it in the OpenAPI spec first, regenerate the client hooks and Zod schemas, then implement it on the server.
+Enforce the window in the quiz API — Make email-validation and submission reject attempts when the test window is closed, so the gate holds even with a direct link.
+Club info landing page — Build a new info page in the quiz site (club intro, the 5 domains, photo slots, contact/socials) using the existing glassmorphism design, with placeholder content and clearly labelled image slots.
+Window-aware routing — On load, the site checks the status endpoint: if the test is live, show the existing email-entry/quiz flow; otherwise show the club info page. Handle loading and error states gracefully.
+Verify both modes — Confirm the site flips correctly between info page and test portal as the core team toggles the control, and that closed-window quiz attempts are refused.
+Relevant files
+artifacts/quiz-site/src/App.tsx
+artifacts/quiz-site/src/pages/home.tsx
+artifacts/quiz-site/src/pages/quiz.tsx
+artifacts/quiz-site/src/pages/result.tsx
+artifacts/quiz-site/src/lib/quiz-context.tsx
+artifacts/quiz-site/src/components/layout.tsx
+artifacts/api-server/src/routes/quiz.ts
+artifacts/api-server/src/routes/recruitment.ts
+artifacts/api-server/src/routes/recruitment-admin.ts
+lib/db/src/schema/recruitment.ts
+lib/db/src/schema/quizzes.ts
+lib/api-spec/openapi.yaml

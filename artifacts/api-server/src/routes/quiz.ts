@@ -2,6 +2,10 @@ import { Router } from "express";
 import { z } from "zod/v4";
 import { quizLimiter } from "../middleware/rateLimiter";
 import { supabaseAdmin } from "../lib/supabase";
+import { isRecruitmentWindowOpen } from "../lib/recruitmentWindow";
+
+const WINDOW_CLOSED_MESSAGE =
+  "The Round 1 test isn't open right now. Please check back on the test date announced by the core team.";
 
 const router = Router();
 
@@ -30,10 +34,12 @@ type QuizForApplicant = {
   passing_score: number;
 };
 
-// Resolves the single published quiz an applicant is allowed to take: exact
-// domain + academic_year match, falling back to the latest published quiz for
-// the domain. Used by BOTH validate-email and submit so a client cannot submit
-// against a quiz that isn't the one assigned to their application.
+// Resolves the single published quiz an applicant is allowed to take: an exact
+// domain + academic_year match. There is intentionally NO fallback to an older
+// year's quiz — the Round 1 test must only resolve to the current window's quiz,
+// matching the `testLive` rule in GET /recruitment/status. Used by BOTH
+// validate-email and submit so a client cannot submit against a quiz that isn't
+// the one assigned to their application.
 async function findPublishedQuizForApplicant(
   domain: string,
   academicYear: string,
@@ -48,18 +54,7 @@ async function findPublishedQuizForApplicant(
     .limit(1)
     .maybeSingle();
   if (exact.error) return { quiz: null, error: exact.error };
-  if (exact.data) return { quiz: exact.data as QuizForApplicant, error: null };
-
-  const fallback = await supabaseAdmin
-    .from("quizzes")
-    .select(QUIZ_FIELDS)
-    .eq("is_published", true)
-    .eq("domain", domain)
-    .order("updated_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (fallback.error) return { quiz: null, error: fallback.error };
-  return { quiz: (fallback.data as QuizForApplicant) ?? null, error: null };
+  return { quiz: (exact.data as QuizForApplicant) ?? null, error: null };
 }
 
 router.post("/quiz/validate-email", quizLimiter, async (req, res) => {
@@ -96,6 +91,23 @@ router.post("/quiz/validate-email", quizLimiter, async (req, res) => {
     });
     return;
   }
+
+  const { open: windowOpen, error: windowErr } = await isRecruitmentWindowOpen(
+    app.academic_year,
+  );
+  if (windowErr) {
+    req.log.error(
+      { windowErr },
+      "Failed to check recruitment window for email validation",
+    );
+    res.status(500).json({ error: "Database error" });
+    return;
+  }
+  if (!windowOpen) {
+    res.status(403).json({ error: WINDOW_CLOSED_MESSAGE });
+    return;
+  }
+
   if (app.payment_status !== "approved") {
     res.status(403).json({
       error:
@@ -225,6 +237,22 @@ router.get("/quiz/:quizId", async (req, res) => {
     return;
   }
 
+  const { open: windowOpen, error: windowErr } = await isRecruitmentWindowOpen(
+    quiz.academic_year,
+  );
+  if (windowErr) {
+    req.log.error(
+      { windowErr },
+      "Failed to check recruitment window for quiz fetch",
+    );
+    res.status(500).json({ error: "Database error" });
+    return;
+  }
+  if (!windowOpen) {
+    res.status(403).json({ error: WINDOW_CLOSED_MESSAGE });
+    return;
+  }
+
   const { data: questions, error: qErr } = await supabaseAdmin
     .from("quiz_questions")
     .select("id, question_text, options, marks, order_index")
@@ -280,6 +308,23 @@ router.post("/quiz/:quizId/submit", quizLimiter, async (req, res) => {
     res.status(400).json({ error: "Email does not match application" });
     return;
   }
+
+  const { open: windowOpen, error: windowErr } = await isRecruitmentWindowOpen(
+    app.academic_year,
+  );
+  if (windowErr) {
+    req.log.error(
+      { windowErr },
+      "Failed to check recruitment window for submission",
+    );
+    res.status(500).json({ error: "Database error" });
+    return;
+  }
+  if (!windowOpen) {
+    res.status(403).json({ error: WINDOW_CLOSED_MESSAGE });
+    return;
+  }
+
   if (app.payment_status !== "approved") {
     res
       .status(403)

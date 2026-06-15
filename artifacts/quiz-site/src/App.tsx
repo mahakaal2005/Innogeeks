@@ -6,7 +6,7 @@ import NotFound from "@/pages/not-found";
 
 import { QuizProvider } from "@/lib/quiz-context";
 import { Layout } from "@/components/layout";
-import Home from "@/pages/home";
+import Landing from "@/pages/landing";
 import Quiz from "@/pages/quiz";
 import Result from "@/pages/result";
 
@@ -16,7 +16,7 @@ function Router() {
   return (
     <Layout>
       <Switch>
-        <Route path="/" component={Home} />
+        <Route path="/" component={Landing} />
         <Route path="/quiz" component={Quiz} />
         <Route path="/result" component={Result} />
         <Route component={NotFound} />

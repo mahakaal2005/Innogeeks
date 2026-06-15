@@ -36,6 +36,7 @@ import type {
   QuizSubmitRequest,
   QuizSubmitResponse,
   RazorpayWebhookBody,
+  RecruitmentStatus,
   RecruitmentWindowRequest,
   RecruitmentWindowResponse,
   ReviewRound2Request,
@@ -642,6 +643,84 @@ export const useSetRecruitmentWindow = <TError = ErrorType<ValidationErrorRespon
       > => {
       return useMutation(getSetRecruitmentWindowMutationOptions(options));
     }
+
+export const getGetRecruitmentStatusUrl = () => {
+
+
+
+
+  return `/api/recruitment/status`
+}
+
+/**
+ * Returns whether the quiz site should show the Round 1 test portal. True only when the core team has an open recruitment window and a published quiz exists for that academic year. No auth required.
+ * @summary Public — whether the Round 1 test is currently live on the quiz site
+ */
+export const getRecruitmentStatus = async ( options?: RequestInit): Promise<RecruitmentStatus> => {
+
+  return customFetch<RecruitmentStatus>(getGetRecruitmentStatusUrl(),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetRecruitmentStatusQueryKey = () => {
+    return [
+    `/api/recruitment/status`
+    ] as const;
+    }
+
+
+export const getGetRecruitmentStatusQueryOptions = <TData = Awaited<ReturnType<typeof getRecruitmentStatus>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetRecruitmentStatusQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getRecruitmentStatus>>> = ({ signal }) => getRecruitmentStatus({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentStatus>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetRecruitmentStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getRecruitmentStatus>>>
+export type GetRecruitmentStatusQueryError = ErrorType<unknown>
+
+
+/**
+ * @summary Public — whether the Round 1 test is currently live on the quiz site
+ */
+
+export function useGetRecruitmentStatus<TData = Awaited<ReturnType<typeof getRecruitmentStatus>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getRecruitmentStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetRecruitmentStatusQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
 
 export const getApproveCashPaymentUrl = () => {
 

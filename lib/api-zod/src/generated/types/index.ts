@@ -27,6 +27,7 @@ export * from './quizSubmitRequest';
 export * from './quizSubmitRequestAnswers';
 export * from './quizSubmitResponse';
 export * from './razorpayWebhookBody';
+export * from './recruitmentStatus';
 export * from './recruitmentWindowRequest';
 export * from './recruitmentWindowRequestAction';
 export * from './recruitmentWindowResponse';

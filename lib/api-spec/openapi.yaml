@@ -223,6 +223,23 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
 
+  /recruitment/status:
+    get:
+      operationId: getRecruitmentStatus
+      tags: [recruitment]
+      summary: Public — whether the Round 1 test is currently live on the quiz site
+      description: >-
+        Returns whether the quiz site should show the Round 1 test portal. True
+        only when the core team has an open recruitment window and a published
+        quiz exists for that academic year. No auth required.
+      responses:
+        "200":
+          description: Current recruitment/test status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecruitmentStatus"
+
   /recruitment/approve-cash:
     post:
       operationId: approveCashPayment
@@ -627,6 +644,18 @@ components:
         isOpen:
           type: boolean
       required: [success, isOpen]
+
+    RecruitmentStatus:
+      type: object
+      properties:
+        testLive:
+          type: boolean
+          description: Whether the Round 1 test portal should be shown
+        academicYear:
+          type: string
+          nullable: true
+          description: Academic year of the open window, if any
+      required: [testLive]
 
     ApproveCashRequest:
       type: object

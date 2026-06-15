@@ -142,6 +142,13 @@ export interface RecruitmentWindowResponse {
   isOpen: boolean;
 }
 
+export interface RecruitmentStatus {
+  /** Whether the Round 1 test portal should be shown */
+  testLive: boolean;
+  /** Academic year of the open window, if any */
+  academicYear?: string | null;
+}
+
 export interface ApproveCashRequest {
   applicationId: string;
 }

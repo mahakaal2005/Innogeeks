@@ -145,6 +145,16 @@ export const SetRecruitmentWindowResponse = zod.object({
 
 
 /**
+ * Returns whether the quiz site should show the Round 1 test portal. True only when the core team has an open recruitment window and a published quiz exists for that academic year. No auth required.
+ * @summary Public — whether the Round 1 test is currently live on the quiz site
+ */
+export const GetRecruitmentStatusResponse = zod.object({
+  "testLive": zod.boolean().describe('Whether the Round 1 test portal should be shown'),
+  "academicYear": zod.string().nullish().describe('Academic year of the open window, if any')
+})
+
+
+/**
  * @summary Approve a cash payment application (coordinator/core_team, domain-gated)
  */
 export const ApproveCashPaymentBody = zod.object({

@@ -3,8 +3,42 @@ import { z } from "zod/v4";
 import { requireCoreTeam } from "../middleware/auth";
 import { generalLimiter } from "../middleware/rateLimiter";
 import { supabaseAdmin } from "../lib/supabase";
+import { getOpenRecruitmentWindow } from "../lib/recruitmentWindow";
 
 const router = Router();
+
+// Public, no-auth: tells the quiz site whether to show the Round 1 test portal
+// or the club info page. "Test live" = an open recruitment window AND at least
+// one published quiz for that window's academic year.
+router.get("/recruitment/status", generalLimiter, async (req, res) => {
+  const { window, error } = await getOpenRecruitmentWindow();
+  if (error) {
+    req.log.error({ error }, "Failed to fetch recruitment window status");
+    res.status(500).json({ error: "Database error" });
+    return;
+  }
+  if (!window) {
+    res.json({ testLive: false, academicYear: null });
+    return;
+  }
+
+  const { count, error: quizErr } = await supabaseAdmin
+    .from("quizzes")
+    .select("id", { count: "exact", head: true })
+    .eq("is_published", true)
+    .eq("academic_year", window.academicYear);
+
+  if (quizErr) {
+    req.log.error({ quizErr }, "Failed to count published quizzes for status");
+    res.status(500).json({ error: "Database error" });
+    return;
+  }
+
+  res.json({
+    testLive: (count ?? 0) > 0,
+    academicYear: window.academicYear,
+  });
+});
 
 const AssignRoleSchema = z.object({
   applicationId: z.uuid(),
