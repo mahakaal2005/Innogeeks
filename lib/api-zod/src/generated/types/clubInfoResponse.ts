@@ -9,4 +9,8 @@ import type { ClubInfoContent } from './clubInfoContent';
 
 export interface ClubInfoResponse {
   content: ClubInfoContent | null;
+  /** When the content was last saved. */
+  updatedAt: Date | null;
+  /** Name of the core team member who last saved the content. */
+  updatedByName: string | null;
 }

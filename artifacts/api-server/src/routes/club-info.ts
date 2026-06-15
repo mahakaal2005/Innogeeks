@@ -9,6 +9,16 @@ const router = Router();
 
 const SINGLETON_ID = "main";
 
+async function resolveEditorName(profileId: string | null): Promise<string | null> {
+  if (!profileId) return null;
+  const { data } = await supabaseAdmin
+    .from("profiles")
+    .select("name")
+    .eq("id", profileId)
+    .maybeSingle();
+  return (data?.name as string | undefined) ?? null;
+}
+
 const HeroSchema = z.object({
   badge: z.string().max(120),
   titleLead: z.string().max(120),
@@ -50,7 +60,7 @@ const ContentSchema = z.object({
 router.get("/club-info", generalLimiter, async (req, res) => {
   const { data, error } = await supabaseAdmin
     .from("club_info")
-    .select("content")
+    .select("content, updated_at, updated_by")
     .eq("id", SINGLETON_ID)
     .maybeSingle();
 
@@ -60,7 +70,15 @@ router.get("/club-info", generalLimiter, async (req, res) => {
     return;
   }
 
-  res.json({ content: (data?.content as ClubInfoContent | undefined) ?? null });
+  const updatedByName = await resolveEditorName(
+    (data?.updated_by as string | null | undefined) ?? null,
+  );
+
+  res.json({
+    content: (data?.content as ClubInfoContent | undefined) ?? null,
+    updatedAt: (data?.updated_at as string | null | undefined) ?? null,
+    updatedByName,
+  });
 });
 
 router.put("/club-info", generalLimiter, requireCoreTeam, async (req, res) => {
@@ -84,7 +102,7 @@ router.put("/club-info", generalLimiter, requireCoreTeam, async (req, res) => {
       },
       { onConflict: "id" },
     )
-    .select("content")
+    .select("content, updated_at, updated_by")
     .maybeSingle();
 
   if (error) {
@@ -93,8 +111,16 @@ router.put("/club-info", generalLimiter, requireCoreTeam, async (req, res) => {
     return;
   }
 
+  const updatedByName = await resolveEditorName(
+    (data?.updated_by as string | null | undefined) ?? req.user!.id,
+  );
+
   req.log.info({ by: req.user!.id }, "Club info updated");
-  res.json({ content: (data?.content as ClubInfoContent | undefined) ?? content });
+  res.json({
+    content: (data?.content as ClubInfoContent | undefined) ?? content,
+    updatedAt: (data?.updated_at as string | null | undefined) ?? null,
+    updatedByName,
+  });
 });
 
 export default router;

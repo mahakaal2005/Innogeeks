@@ -261,6 +261,10 @@ export interface ClubInfoContent {
 
 export interface ClubInfoResponse {
   content: ClubInfoContent | null;
+  /** When the content was last saved. */
+  updatedAt: string | null;
+  /** Name of the core team member who last saved the content. */
+  updatedByName: string | null;
 }
 
 /**

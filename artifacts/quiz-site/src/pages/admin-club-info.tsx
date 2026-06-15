@@ -132,11 +132,32 @@ function ImageField({
   );
 }
 
-function Editor({ initial }: { initial: ClubInfoContent }) {
+function formatEditedAt(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+}
+
+function Editor({
+  initial,
+  updatedAt,
+  updatedByName,
+}: {
+  initial: ClubInfoContent;
+  updatedAt: string | null;
+  updatedByName: string | null;
+}) {
   const { toast } = useToast();
   const { signOut } = useAdminAuth();
   const update = useUpdateClubInfo();
   const [content, setContent] = useState<ClubInfoContent>(initial);
+  const [lastEdit, setLastEdit] = useState<{
+    at: string | null;
+    by: string | null;
+  }>({ at: updatedAt, by: updatedByName });
 
   function patch(updater: (c: ClubInfoContent) => ClubInfoContent) {
     setContent((c) => updater(structuredClone(c)));
@@ -144,7 +165,11 @@ function Editor({ initial }: { initial: ClubInfoContent }) {
 
   async function handleSave() {
     try {
-      await update.mutateAsync({ data: content });
+      const res = await update.mutateAsync({ data: content });
+      setLastEdit({
+        at: res.updatedAt ?? null,
+        by: res.updatedByName ?? null,
+      });
       toast({ title: "Saved", description: "The info page has been updated." });
     } catch (err) {
       toast({
@@ -167,6 +192,13 @@ function Editor({ initial }: { initial: ClubInfoContent }) {
           <p className="text-sm text-white/50">
             Changes go live immediately — no redeploy needed.
           </p>
+          {lastEdit.at && (
+            <p className="mt-1 text-xs text-white/40" data-testid="text-last-edited">
+              Last edited
+              {lastEdit.by ? ` by ${lastEdit.by}` : ""} on{" "}
+              {formatEditedAt(lastEdit.at)}
+            </p>
+          )}
         </div>
         <Button
           variant="outline"
@@ -625,7 +657,13 @@ function EditorLoader() {
   if (isLoading) {
     return <Loader2 className="h-8 w-8 animate-spin text-white/60" />;
   }
-  return <Editor initial={data?.content ?? DEFAULT_CLUB_INFO} />;
+  return (
+    <Editor
+      initial={data?.content ?? DEFAULT_CLUB_INFO}
+      updatedAt={data?.updatedAt ?? null}
+      updatedByName={data?.updatedByName ?? null}
+    />
+  );
 }
 
 export default function AdminClubInfo() {

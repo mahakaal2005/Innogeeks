@@ -272,7 +272,9 @@ export const GetClubInfoResponse = zod.object({
   "value": zod.string(),
   "href": zod.string()
 }))
-}).nullable()
+}).nullable(),
+  "updatedAt": zod.coerce.date().nullable().describe('When the content was last saved.'),
+  "updatedByName": zod.string().nullable().describe('Name of the core team member who last saved the content.')
 })
 
 
@@ -334,7 +336,9 @@ export const UpdateClubInfoResponse = zod.object({
   "value": zod.string(),
   "href": zod.string()
 }))
-}).nullable()
+}).nullable(),
+  "updatedAt": zod.coerce.date().nullable().describe('When the content was last saved.'),
+  "updatedByName": zod.string().nullable().describe('Name of the core team member who last saved the content.')
 })
 
 
