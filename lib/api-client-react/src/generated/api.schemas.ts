@@ -267,6 +267,20 @@ export interface ClubInfoResponse {
   updatedByName: string | null;
 }
 
+export interface ClubInfoHistoryEntry {
+  /** Unique id of this history entry. */
+  id: string;
+  content: ClubInfoContent;
+  /** When this version was saved. */
+  editedAt: string;
+  /** Name of the core team member who saved this version. */
+  editedByName: string | null;
+}
+
+export interface ClubInfoHistoryResponse {
+  entries: ClubInfoHistoryEntry[];
+}
+
 /**
  * Request validation failed
  */
@@ -298,4 +312,13 @@ export type ConflictResponse = ErrorResponse;
 export type ServiceUnavailableResponse = ErrorResponse;
 
 export type RazorpayWebhookBody = { [key: string]: unknown };
+
+export type GetClubInfoHistoryParams = {
+/**
+ * Maximum number of history entries to return (newest first).
+ * @minimum 1
+ * @maximum 100
+ */
+limit?: number;
+};
 

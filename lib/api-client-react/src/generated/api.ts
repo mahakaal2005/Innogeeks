@@ -25,11 +25,13 @@ import type {
   CloudinarySignRequest,
   CloudinarySignResponse,
   ClubInfoContent,
+  ClubInfoHistoryResponse,
   ClubInfoResponse,
   ConflictResponse,
   CreateOrderRequest,
   CreateOrderResponse,
   ForbiddenResponse,
+  GetClubInfoHistoryParams,
   HealthStatus,
   NotFoundResponse,
   PublicConfig,
@@ -1237,4 +1239,90 @@ export const useUpdateClubInfo = <TError = ErrorType<ValidationErrorResponse | U
       > => {
       return useMutation(getUpdateClubInfoMutationOptions(options));
     }
+
+export const getGetClubInfoHistoryUrl = (params?: GetClubInfoHistoryParams,) => {
+  const normalizedParams = new URLSearchParams();
+
+  Object.entries(params || {}).forEach(([key, value]) => {
+
+    if (value !== undefined) {
+      normalizedParams.append(key, value === null ? 'null' : value.toString())
+    }
+  });
+
+  const stringifiedParams = normalizedParams.toString();
+
+  return stringifiedParams.length > 0 ? `/api/club-info/history?${stringifiedParams}` : `/api/club-info/history`
+}
+
+/**
+ * Returns the audit history of club-info page saves, newest first. Each entry records who saved it, when, and a snapshot of the saved content.
+
+ * @summary List recent club-info edits (core team only)
+ */
+export const getClubInfoHistory = async (params?: GetClubInfoHistoryParams, options?: RequestInit): Promise<ClubInfoHistoryResponse> => {
+
+  return customFetch<ClubInfoHistoryResponse>(getGetClubInfoHistoryUrl(params),
+  {
+    ...options,
+    method: 'GET'
+
+
+  }
+);}
+
+
+
+
+
+export const getGetClubInfoHistoryQueryKey = (params?: GetClubInfoHistoryParams,) => {
+    return [
+    `/api/club-info/history`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetClubInfoHistoryQueryOptions = <TData = Awaited<ReturnType<typeof getClubInfoHistory>>, TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>>(params?: GetClubInfoHistoryParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getClubInfoHistory>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetClubInfoHistoryQueryKey(params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getClubInfoHistory>>> = ({ signal }) => getClubInfoHistory(params, { signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getClubInfoHistory>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetClubInfoHistoryQueryResult = NonNullable<Awaited<ReturnType<typeof getClubInfoHistory>>>
+export type GetClubInfoHistoryQueryError = ErrorType<UnauthorizedResponse | ForbiddenResponse>
+
+
+/**
+ * @summary List recent club-info edits (core team only)
+ */
+
+export function useGetClubInfoHistory<TData = Awaited<ReturnType<typeof getClubInfoHistory>>, TError = ErrorType<UnauthorizedResponse | ForbiddenResponse>>(
+ params?: GetClubInfoHistoryParams, options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getClubInfoHistory>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetClubInfoHistoryQueryOptions(params,options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
 

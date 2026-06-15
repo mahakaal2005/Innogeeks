@@ -420,6 +420,38 @@ paths:
         "403":
           $ref: "#/components/responses/Forbidden"
 
+  /club-info/history:
+    get:
+      operationId: getClubInfoHistory
+      tags: [club-info]
+      summary: List recent club-info edits (core team only)
+      description: >
+        Returns the audit history of club-info page saves, newest first. Each
+        entry records who saved it, when, and a snapshot of the saved content.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of history entries to return (newest first).
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        "200":
+          description: Club info edit history
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClubInfoHistoryResponse"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
 components:
   securitySchemes:
     bearerAuth:
@@ -895,3 +927,30 @@ components:
           nullable: true
           description: Name of the core team member who last saved the content.
       required: [content, updatedAt, updatedByName]
+
+    ClubInfoHistoryEntry:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique id of this history entry.
+        content:
+          $ref: "#/components/schemas/ClubInfoContent"
+        editedAt:
+          type: string
+          format: date-time
+          description: When this version was saved.
+        editedByName:
+          type: string
+          nullable: true
+          description: Name of the core team member who saved this version.
+      required: [id, content, editedAt, editedByName]
+
+    ClubInfoHistoryResponse:
+      type: object
+      properties:
+        entries:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClubInfoHistoryEntry"
+      required: [entries]

@@ -342,3 +342,53 @@ export const UpdateClubInfoResponse = zod.object({
 })
 
 
+/**
+ * Returns the audit history of club-info page saves, newest first. Each entry records who saved it, when, and a snapshot of the saved content.
+
+ * @summary List recent club-info edits (core team only)
+ */
+export const getClubInfoHistoryQueryLimitDefault = 20;
+export const getClubInfoHistoryQueryLimitMax = 100;
+
+
+
+export const GetClubInfoHistoryQueryParams = zod.object({
+  "limit": zod.coerce.number().min(1).max(getClubInfoHistoryQueryLimitMax).default(getClubInfoHistoryQueryLimitDefault).describe('Maximum number of history entries to return (newest first).')
+})
+
+export const GetClubInfoHistoryResponse = zod.object({
+  "entries": zod.array(zod.object({
+  "id": zod.string().describe('Unique id of this history entry.'),
+  "content": zod.object({
+  "hero": zod.object({
+  "badge": zod.string(),
+  "titleLead": zod.string(),
+  "titleHighlight": zod.string(),
+  "description": zod.string(),
+  "imageUrl": zod.string().nullable()
+}),
+  "about": zod.object({
+  "heading": zod.string(),
+  "paragraphs": zod.array(zod.string())
+}),
+  "domains": zod.array(zod.object({
+  "key": zod.string(),
+  "label": zod.string(),
+  "blurb": zod.string()
+})),
+  "gallery": zod.array(zod.object({
+  "url": zod.string(),
+  "caption": zod.string()
+})),
+  "socials": zod.array(zod.object({
+  "label": zod.string(),
+  "value": zod.string(),
+  "href": zod.string()
+}))
+}),
+  "editedAt": zod.coerce.date().describe('When this version was saved.'),
+  "editedByName": zod.string().nullable().describe('Name of the core team member who saved this version.')
+}))
+})
+
+

@@ -8,9 +8,11 @@ import {
   Upload,
   Save,
   ImageOff,
+  History,
 } from "lucide-react";
 import {
   useGetClubInfo,
+  useGetClubInfoHistory,
   useUpdateClubInfo,
   type ClubInfoContent,
   type ClubInfoGalleryItem,
@@ -141,6 +143,58 @@ function formatEditedAt(iso: string): string {
   });
 }
 
+function HistoryPanel({ refreshKey }: { refreshKey: number }) {
+  const { data, isLoading, isError, refetch } = useGetClubInfoHistory({
+    limit: 20,
+  });
+
+  useEffect(() => {
+    if (refreshKey > 0) refetch();
+  }, [refreshKey, refetch]);
+
+  const entries = data?.entries ?? [];
+
+  return (
+    <Section title="Edit history">
+      <p className="text-sm text-white/50" data-testid="text-history-intro">
+        The most recent saves of this page, newest first.
+      </p>
+      {isLoading ? (
+        <div className="flex items-center gap-2 text-sm text-white/50">
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading history…
+        </div>
+      ) : isError ? (
+        <p className="text-sm text-red-300">Could not load edit history.</p>
+      ) : entries.length === 0 ? (
+        <p className="text-sm text-white/40" data-testid="text-history-empty">
+          No edits recorded yet.
+        </p>
+      ) : (
+        <ul className="space-y-2" data-testid="list-history">
+          {entries.map((entry, i) => (
+            <li
+              key={entry.id}
+              className="flex items-center gap-3 rounded-lg border border-white/10 bg-white/5 px-3 py-2"
+              data-testid={`history-entry-${i}`}
+            >
+              <History className="h-4 w-4 shrink-0 text-white/40" />
+              <div className="min-w-0 text-sm">
+                <span className="text-white">
+                  {entry.editedByName ?? "Unknown"}
+                </span>
+                <span className="text-white/50">
+                  {" "}
+                  · {formatEditedAt(entry.editedAt)}
+                </span>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Section>
+  );
+}
+
 function Editor({
   initial,
   updatedAt,
@@ -158,6 +212,7 @@ function Editor({
     at: string | null;
     by: string | null;
   }>({ at: updatedAt, by: updatedByName });
+  const [historyRefreshKey, setHistoryRefreshKey] = useState(0);
 
   function patch(updater: (c: ClubInfoContent) => ClubInfoContent) {
     setContent((c) => updater(structuredClone(c)));
@@ -170,6 +225,7 @@ function Editor({
         at: res.updatedAt ?? null,
         by: res.updatedByName ?? null,
       });
+      setHistoryRefreshKey((k) => k + 1);
       toast({ title: "Saved", description: "The info page has been updated." });
     } catch (err) {
       toast({
@@ -209,6 +265,8 @@ function Editor({
           <LogOut className="mr-2 h-4 w-4" /> Sign out
         </Button>
       </div>
+
+      <HistoryPanel refreshKey={historyRefreshKey} />
 
       {/* Hero */}
       <Section title="Hero">

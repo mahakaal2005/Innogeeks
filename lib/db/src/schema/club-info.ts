@@ -1,4 +1,11 @@
-import { pgTable, text, jsonb, uuid, timestamp } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  text,
+  jsonb,
+  uuid,
+  timestamp,
+  index,
+} from "drizzle-orm/pg-core";
 import { profiles } from "./profiles";
 
 export interface ClubInfoHero {
@@ -53,3 +60,22 @@ export const clubInfo = pgTable("club_info", {
 
 export type ClubInfo = typeof clubInfo.$inferSelect;
 export type InsertClubInfo = typeof clubInfo.$inferInsert;
+
+// Append-only audit log: one row per save of the club_info page. Captures who
+// saved it, when, and a snapshot of the saved content. Written by Express on
+// every successful PUT /club-info; reads are core_team-only.
+export const clubInfoHistory = pgTable(
+  "club_info_history",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    content: jsonb("content").$type<ClubInfoContent>().notNull(),
+    editedBy: uuid("edited_by").references(() => profiles.id),
+    editedAt: timestamp("edited_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("club_info_history_edited_at_idx").on(t.editedAt.desc())],
+);
+
+export type ClubInfoHistoryEntry = typeof clubInfoHistory.$inferSelect;
+export type InsertClubInfoHistoryEntry = typeof clubInfoHistory.$inferInsert;

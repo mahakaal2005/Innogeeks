@@ -19,6 +19,22 @@ async function resolveEditorName(profileId: string | null): Promise<string | nul
   return (data?.name as string | undefined) ?? null;
 }
 
+async function resolveEditorNames(
+  profileIds: string[],
+): Promise<Map<string, string>> {
+  const names = new Map<string, string>();
+  const unique = [...new Set(profileIds)];
+  if (unique.length === 0) return names;
+  const { data } = await supabaseAdmin
+    .from("profiles")
+    .select("id, name")
+    .in("id", unique);
+  for (const row of (data ?? []) as { id: string; name: string }[]) {
+    names.set(row.id, row.name);
+  }
+  return names;
+}
+
 const HeroSchema = z.object({
   badge: z.string().max(120),
   titleLead: z.string().max(120),
@@ -111,6 +127,19 @@ router.put("/club-info", generalLimiter, requireCoreTeam, async (req, res) => {
     return;
   }
 
+  const { error: historyError } = await supabaseAdmin
+    .from("club_info_history")
+    .insert({
+      content,
+      edited_by: req.user!.id,
+    });
+
+  if (historyError) {
+    // The save itself succeeded; a failed history write should not fail the
+    // request, but it's worth surfacing in logs.
+    req.log.error({ error: historyError }, "Failed to record club info history");
+  }
+
   const updatedByName = await resolveEditorName(
     (data?.updated_by as string | null | undefined) ?? req.user!.id,
   );
@@ -122,5 +151,57 @@ router.put("/club-info", generalLimiter, requireCoreTeam, async (req, res) => {
     updatedByName,
   });
 });
+
+const HistoryQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+});
+
+router.get(
+  "/club-info/history",
+  generalLimiter,
+  requireCoreTeam,
+  async (req, res) => {
+    const parsed = HistoryQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      res
+        .status(400)
+        .json({ error: "Validation failed", details: parsed.error.flatten() });
+      return;
+    }
+    const { limit } = parsed.data;
+
+    const { data, error } = await supabaseAdmin
+      .from("club_info_history")
+      .select("id, content, edited_at, edited_by")
+      .order("edited_at", { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      req.log.error({ error }, "Failed to fetch club info history");
+      res.status(500).json({ error: "Database error" });
+      return;
+    }
+
+    const rows = (data ?? []) as {
+      id: string;
+      content: ClubInfoContent;
+      edited_at: string;
+      edited_by: string | null;
+    }[];
+
+    const names = await resolveEditorNames(
+      rows.map((r) => r.edited_by).filter((id): id is string => Boolean(id)),
+    );
+
+    res.json({
+      entries: rows.map((r) => ({
+        id: r.id,
+        content: r.content,
+        editedAt: r.edited_at,
+        editedByName: r.edited_by ? names.get(r.edited_by) ?? null : null,
+      })),
+    });
+  },
+);
 
 export default router;
