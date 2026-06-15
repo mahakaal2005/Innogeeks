@@ -2,14 +2,23 @@ openapi: 3.1.0
 info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
-  version: 0.1.0
-  description: API specification
+  version: 0.2.0
+  description: Club Innogeeks trusted Express API — Razorpay, quiz scoring, role assignment, Cloudinary signing
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: payments
+    description: Razorpay order creation and webhook
+  - name: quiz
+    description: Quiz delivery and scoring
+  - name: recruitment
+    description: Round2 role assignment
+  - name: cloudinary
+    description: Cloudinary upload signing
+
 paths:
   /healthz:
     get:
@@ -24,13 +33,374 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /payments/orders:
+    post:
+      operationId: createPaymentOrder
+      tags: [payments]
+      summary: Create a Razorpay order (idempotent)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateOrderRequest"
+      responses:
+        "201":
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateOrderResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+
+  /payments/webhook:
+    post:
+      operationId: razorpayWebhook
+      tags: [payments]
+      summary: Razorpay event webhook
+      parameters:
+        - in: header
+          name: x-razorpay-signature
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        "200":
+          description: Webhook received
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WebhookAck"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+
+  /quiz/{quizId}:
+    get:
+      operationId: getQuiz
+      tags: [quiz]
+      summary: Fetch published quiz questions (no correct answers)
+      parameters:
+        - in: path
+          name: quizId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Quiz with questions
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuizResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /quiz/{quizId}/submit:
+    post:
+      operationId: submitQuiz
+      tags: [quiz]
+      summary: Submit quiz answers — server-side scoring, one submission per email
+      parameters:
+        - in: path
+          name: quizId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/QuizSubmitRequest"
+      responses:
+        "201":
+          description: Submission recorded with score
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QuizSubmitResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /recruitment/assign-role:
+    post:
+      operationId: assignMemberRole
+      tags: [recruitment]
+      summary: Atomically assign member role after Round2 (core_team only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignRoleRequest"
+      responses:
+        "200":
+          description: Role assigned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /cloudinary/sign:
+    post:
+      operationId: signCloudinaryUpload
+      tags: [cloudinary]
+      summary: Generate a signed upload signature for Cloudinary
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CloudinarySignRequest"
+      responses:
+        "200":
+          description: Upload signature
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CloudinarySignResponse"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "503":
+          $ref: "#/components/responses/ServiceUnavailable"
+
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    ValidationError:
+      description: Request validation failed
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Unauthorized:
+      description: Missing or invalid auth token
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Forbidden:
+      description: Insufficient role
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Conflict:
+      description: Conflict — duplicate or invalid state transition
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    ServiceUnavailable:
+      description: External service not configured
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
   schemas:
     HealthStatus:
       type: object
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required: [error]
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required: [success]
+
+    WebhookAck:
+      type: object
+      properties:
+        received:
+          type: boolean
+      required: [received]
+
+    CreateOrderRequest:
+      type: object
+      properties:
+        applicationId:
+          type: string
+          format: uuid
+        amountPaise:
+          type: integer
+          minimum: 100
+          description: Amount in paise (INR × 100)
+        idempotencyKey:
+          type: string
+          minLength: 1
+          maxLength: 64
+      required: [applicationId, amountPaise, idempotencyKey]
+
+    CreateOrderResponse:
+      type: object
+      properties:
+        orderId:
+          type: string
+        idempotent:
+          type: boolean
+      required: [orderId]
+
+    QuizQuestion:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        question_text:
+          type: string
+        options:
+          type: array
+          items:
+            type: string
+        marks:
+          type: integer
+        order_index:
+          type: integer
+      required: [id, question_text, options, marks, order_index]
+
+    QuizResponse:
+      type: object
+      properties:
+        quiz:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            title:
+              type: string
+            description:
+              type: string
+              nullable: true
+            domain:
+              type: string
+              nullable: true
+            academic_year:
+              type: string
+              nullable: true
+            time_limit_seconds:
+              type: integer
+              nullable: true
+          required: [id, title]
+        questions:
+          type: array
+          items:
+            $ref: "#/components/schemas/QuizQuestion"
+      required: [quiz, questions]
+
+    QuizSubmitRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        applicationId:
+          type: string
+          format: uuid
+        answers:
+          type: object
+          additionalProperties:
+            type: integer
+          description: Map of questionId to selected option index
+      required: [email, answers]
+
+    QuizSubmitResponse:
+      type: object
+      properties:
+        score:
+          type: integer
+        total:
+          type: integer
+        passed:
+          type: boolean
+      required: [score, total, passed]
+
+    AssignRoleRequest:
+      type: object
+      properties:
+        applicationId:
+          type: string
+          format: uuid
+      required: [applicationId]
+
+    CloudinarySignRequest:
+      type: object
+      properties:
+        folder:
+          type: string
+          minLength: 1
+        publicId:
+          type: string
+        eager:
+          type: string
+      required: [folder]
+
+    CloudinarySignResponse:
+      type: object
+      properties:
+        signature:
+          type: string
+        timestamp:
+          type: integer
+        apiKey:
+          type: string
+        cloudName:
+          type: string
+        folder:
+          type: string
+      required: [signature, timestamp, apiKey, cloudName, folder]

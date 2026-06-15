@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.2.0
  */
 
-export interface HealthStatus {
-  status: string;
-}
+/**
+ * Map of questionId to selected option index
+ */
+export type QuizSubmitRequestAnswers = {[key: string]: number};

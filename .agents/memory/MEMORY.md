@@ -1,1 +1,3 @@
-- [Supabase connectivity from Replit](supabase-connectivity.md) — direct DB host is IPv6-only (unreachable); use Supavisor pooler host + `postgres.<ref>` user, build pool from discrete fields not URL.
+- [Supabase connectivity from Replit](supabase-connectivity.md) — direct DB host is IPv6-only (unreachable); Supavisor pooler also unreachable (tenant not found even when project active); apply SQL via MCP/dashboard instead.
+- [Express API architecture](express-api-arch.md) — trusted server pattern: Razorpay+quiz scoring+role-assign+Cloudinary only; Supabase service role bypasses RLS; zod/v4 must be added as direct dependency to server artifacts.
+- [Orval codegen barrel conflict](orval-barrel.md) — orval zod output generates same names in api.ts (Zod schemas) and types/ (TS types); fix: barrel exports only `./generated/api`, not `./generated/types`; use z.infer<> for types.

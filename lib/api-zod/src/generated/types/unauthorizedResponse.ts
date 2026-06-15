@@ -5,7 +5,9 @@
  * Club Innogeeks trusted Express API — Razorpay, quiz scoring, role assignment, Cloudinary signing
  * OpenAPI spec version: 0.2.0
  */
+import type { ErrorResponse } from './errorResponse';
 
-export interface HealthStatus {
-  status: string;
-}
+/**
+ * Missing or invalid auth token
+ */
+export type UnauthorizedResponse = ErrorResponse;

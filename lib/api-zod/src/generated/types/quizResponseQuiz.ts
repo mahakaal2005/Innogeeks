@@ -6,6 +6,11 @@
  * OpenAPI spec version: 0.2.0
  */
 
-export interface HealthStatus {
-  status: string;
-}
+export type QuizResponseQuiz = {
+  id: string;
+  title: string;
+  description?: string | null;
+  domain?: string | null;
+  academic_year?: string | null;
+  time_limit_seconds?: number | null;
+};

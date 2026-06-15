@@ -5,7 +5,10 @@
  * Club Innogeeks trusted Express API — Razorpay, quiz scoring, role assignment, Cloudinary signing
  * OpenAPI spec version: 0.2.0
  */
+import type { QuizQuestion } from './quizQuestion';
+import type { QuizResponseQuiz } from './quizResponseQuiz';
 
-export interface HealthStatus {
-  status: string;
+export interface QuizResponse {
+  quiz: QuizResponseQuiz;
+  questions: QuizQuestion[];
 }

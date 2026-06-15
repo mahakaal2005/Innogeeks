@@ -6,6 +6,10 @@
  * OpenAPI spec version: 0.2.0
  */
 
-export interface HealthStatus {
-  status: string;
+export interface QuizQuestion {
+  id: string;
+  question_text: string;
+  options: string[];
+  marks: number;
+  order_index: number;
 }
