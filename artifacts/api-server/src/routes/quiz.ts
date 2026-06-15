@@ -343,17 +343,15 @@ router.post("/quiz/:quizId/submit", quizLimiter, async (req, res) => {
 
   const passed = score >= assignedQuiz.passing_score;
 
-  const { error: subErr } = await supabaseAdmin
-    .from("quiz_submissions")
-    .insert({
-      quiz_id: quizId,
-      email,
-      application_id: applicationId,
-      answers,
-      score,
-      total,
-      passed,
-    });
+  const { error: subErr } = await supabaseAdmin.rpc("submit_quiz", {
+    p_quiz_id: quizId,
+    p_email: email,
+    p_application_id: applicationId,
+    p_answers: answers,
+    p_score: score,
+    p_total: total,
+    p_passed: passed,
+  });
 
   if (subErr) {
     if (subErr.code === "23505") {
@@ -362,28 +360,9 @@ router.post("/quiz/:quizId/submit", quizLimiter, async (req, res) => {
         .json({ error: "Quiz already submitted for this email" });
       return;
     }
-    req.log.error({ subErr }, "Failed to save submission");
+    req.log.error({ subErr }, "Failed to save submission via RPC");
     res.status(500).json({ error: "Failed to save submission" });
     return;
-  }
-
-  const update: Record<string, string> = {
-    round1_status: passed ? "cleared" : "failed",
-    updated_at: new Date().toISOString(),
-  };
-  if (passed) update["status"] = "round2_qualified";
-
-  const { error: updateErr } = await supabaseAdmin
-    .from("recruitment_applications")
-    .update(update)
-    .eq("id", applicationId)
-    .eq("email", email);
-
-  if (updateErr) {
-    req.log.error(
-      { updateErr, applicationId },
-      "Quiz scored but application status update failed",
-    );
   }
 
   req.log.info({ quizId, email, score, total, passed }, "Quiz scored");

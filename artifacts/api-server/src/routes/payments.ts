@@ -103,11 +103,12 @@ router.post("/payments/webhook", async (req, res) => {
     .update(rawBody)
     .digest("hex");
 
+  const sigBuf = Buffer.from(signature, "utf8");
+  const expBuf = Buffer.from(expected, "utf8");
+
   if (
-    !crypto.timingSafeEqual(
-      Buffer.from(signature, "utf8"),
-      Buffer.from(expected, "utf8"),
-    )
+    sigBuf.length !== expBuf.length ||
+    !crypto.timingSafeEqual(sigBuf, expBuf)
   ) {
     res.status(400).json({ error: "Invalid signature" });
     return;

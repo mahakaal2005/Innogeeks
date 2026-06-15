@@ -6,35 +6,35 @@
 
 -- ── Enums ────────────────────────────────────────────────────
 
-CREATE TYPE IF NOT EXISTS public.role AS ENUM (
+CREATE TYPE public.role AS ENUM (
   'public', 'member', 'coordinator', 'core_team'
 );
 
-CREATE TYPE IF NOT EXISTS public.domain AS ENUM (
+CREATE TYPE public.domain AS ENUM (
   'android', 'web', 'ml', 'iot', 'arvr'
 );
 
-CREATE TYPE IF NOT EXISTS public.payment_method AS ENUM ('upi', 'cash');
+CREATE TYPE public.payment_method AS ENUM ('upi', 'cash');
 
-CREATE TYPE IF NOT EXISTS public.payment_status AS ENUM (
+CREATE TYPE public.payment_status AS ENUM (
   'pending', 'cash_pending', 'approved', 'rejected'
 );
 
-CREATE TYPE IF NOT EXISTS public.round_status AS ENUM (
+CREATE TYPE public.round_status AS ENUM (
   'pending', 'cleared', 'failed'
 );
 
-CREATE TYPE IF NOT EXISTS public.application_status AS ENUM (
+CREATE TYPE public.application_status AS ENUM (
   'registered', 'round1_qualified', 'round2_qualified', 'selected', 'rejected'
 );
 
-CREATE TYPE IF NOT EXISTS public.resource_type AS ENUM ('pdf', 'link');
+CREATE TYPE public.resource_type AS ENUM ('pdf', 'link');
 
-CREATE TYPE IF NOT EXISTS public.registration_scope AS ENUM (
+CREATE TYPE public.registration_scope AS ENUM (
   'open', 'members_only'
 );
 
-CREATE TYPE IF NOT EXISTS public.event_status AS ENUM (
+CREATE TYPE public.event_status AS ENUM (
   'draft', 'published', 'past'
 );
 
