@@ -17,14 +17,23 @@ class AuthRepository(
     val sessionFlow: Flow<Session?> = sessionStore.sessionFlow
 
     suspend fun signIn(email: String, password: String): Resource<Unit> {
+        val previousToken = sessionStore.cachedAccessToken
         return try {
             val auth = authApi.signInWithPassword(body = SignInRequest(email.trim(), password))
+            // The session isn't persisted until save() below, so cache the freshly
+            // issued token now — otherwise the profile lookup goes out as anon and
+            // RLS returns no rows, surfacing a misleading "No profile found" error.
+            sessionStore.cacheToken(auth.accessToken)
             val profiles = restApi.getProfile(idFilter = "eq.${auth.user.id}")
             val profile = profiles.firstOrNull()
-                ?: return Resource.Error("No profile found for this account.")
+            if (profile == null) {
+                sessionStore.cacheToken(previousToken)
+                return Resource.Error("No profile found for this account.")
+            }
             sessionStore.save(auth, profile)
             Resource.Success(Unit)
         } catch (e: HttpException) {
+            sessionStore.cacheToken(previousToken)
             Resource.Error(
                 when (e.code()) {
                     400, 401 -> "Invalid email or password."
@@ -32,6 +41,7 @@ class AuthRepository(
                 }
             )
         } catch (e: Exception) {
+            sessionStore.cacheToken(previousToken)
             Resource.Error(e.message ?: "Network error. Please check your connection.")
         }
     }

@@ -63,6 +63,16 @@ class SessionStore(private val context: Context) {
         cachedAccessToken = context.dataStore.data.first()[Keys.ACCESS]
     }
 
+    /**
+     * Caches the access token in memory so the OkHttp interceptor can attach it
+     * before the full session is persisted via [save]. Needed during sign-in:
+     * the profile lookup runs before the session exists, so without a cached
+     * token the request goes out as anon and RLS hides the profile row.
+     */
+    fun cacheToken(token: String?) {
+        cachedAccessToken = token
+    }
+
     suspend fun save(auth: AuthResponse, profile: ProfileDto) {
         context.dataStore.edit { prefs ->
             prefs[Keys.ACCESS] = auth.accessToken

@@ -1,4 +1,5 @@
 - [Quiz site no-login model](quiz-site-no-login.md) — Round 1 quiz uses KIET-email-only identity (no auth) by deliberate design; runs on invigilated college PCs. Don't "fix" it by adding login.
 - [Android build workflow](android-build-workflow.md) — Replit can't compile/run native Android; user builds in Android Studio and round-trips code via GitHub. Agent writes Kotlin only.
+- [Android sign-in token ordering](android-signin-token-ordering.md) — cache the access token before any authenticated call made before session-save, or RLS returns no rows → misleading "No profile found".
 - [Recruitment window invariant](recruitment-window-invariant.md) — Round 1 quiz gated by open window + exact academic_year published quiz; no year fallback, gate every quiz-read endpoint or questions leak when window closed.
 - [Android lifecycle 2.9.0 ViewModel factory](android-lifecycle-290.md) — don't hand-write a Class-based ViewModelProvider.Factory (breaks on 2.9.0); use viewModelFactory{} DSL + keep all lifecycle artifacts one version.
