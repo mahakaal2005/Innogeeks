@@ -6,3 +6,9 @@ id = "8T6QrcA9BqvhUvcuQk5oy"
 uri = "file://docs/10_USER_FLOWS.md"
 type = "text"
 title = "User Flows — all user types (exact)"
+
+[[outputs]]
+id = "t117hnqa1Ym5ZascUgGur"
+uri = "file://docs/11_SCOPES_AND_FEATURES.md"
+type = "text"
+title = "User Scopes, Separations & Features (complete definition)"
