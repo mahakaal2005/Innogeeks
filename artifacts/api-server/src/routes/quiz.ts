@@ -17,6 +17,51 @@ const ValidateEmailSchema = z.object({
   email: z.email(),
 });
 
+const QUIZ_FIELDS =
+  "id, title, description, domain, academic_year, time_limit_seconds, passing_score";
+
+type QuizForApplicant = {
+  id: string;
+  title: string;
+  description: string | null;
+  domain: string;
+  academic_year: string;
+  time_limit_seconds: number | null;
+  passing_score: number;
+};
+
+// Resolves the single published quiz an applicant is allowed to take: exact
+// domain + academic_year match, falling back to the latest published quiz for
+// the domain. Used by BOTH validate-email and submit so a client cannot submit
+// against a quiz that isn't the one assigned to their application.
+async function findPublishedQuizForApplicant(
+  domain: string,
+  academicYear: string,
+): Promise<{ quiz: QuizForApplicant | null; error: unknown }> {
+  const exact = await supabaseAdmin
+    .from("quizzes")
+    .select(QUIZ_FIELDS)
+    .eq("is_published", true)
+    .eq("domain", domain)
+    .eq("academic_year", academicYear)
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (exact.error) return { quiz: null, error: exact.error };
+  if (exact.data) return { quiz: exact.data as QuizForApplicant, error: null };
+
+  const fallback = await supabaseAdmin
+    .from("quizzes")
+    .select(QUIZ_FIELDS)
+    .eq("is_published", true)
+    .eq("domain", domain)
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (fallback.error) return { quiz: null, error: fallback.error };
+  return { quiz: (fallback.data as QuizForApplicant) ?? null, error: null };
+}
+
 router.post("/quiz/validate-email", quizLimiter, async (req, res) => {
   const parsed = ValidateEmailSchema.safeParse(req.body);
   if (!parsed.success) {
@@ -59,53 +104,15 @@ router.post("/quiz/validate-email", quizLimiter, async (req, res) => {
     return;
   }
 
-  let quiz: {
-    id: string;
-    title: string;
-    description: string | null;
-    time_limit_seconds: number | null;
-    passing_score: number;
-  } | null = null;
+  const { quiz, error: quizErr } = await findPublishedQuizForApplicant(
+    app.domain,
+    app.academic_year,
+  );
 
-  const exact = await supabaseAdmin
-    .from("quizzes")
-    .select("id, title, description, time_limit_seconds, passing_score")
-    .eq("is_published", true)
-    .eq("domain", app.domain)
-    .eq("academic_year", app.academic_year)
-    .order("updated_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (exact.error) {
-    req.log.error(
-      { quizErr: exact.error },
-      "Failed to fetch quiz for email validation",
-    );
+  if (quizErr) {
+    req.log.error({ quizErr }, "Failed to fetch quiz for email validation");
     res.status(500).json({ error: "Database error" });
     return;
-  }
-  quiz = exact.data;
-
-  if (!quiz) {
-    const fallback = await supabaseAdmin
-      .from("quizzes")
-      .select("id, title, description, time_limit_seconds, passing_score")
-      .eq("is_published", true)
-      .eq("domain", app.domain)
-      .order("updated_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (fallback.error) {
-      req.log.error(
-        { quizErr: fallback.error },
-        "Failed to fetch fallback quiz for email validation",
-      );
-      res.status(500).json({ error: "Database error" });
-      return;
-    }
-    quiz = fallback.data;
   }
 
   if (!quiz) {
@@ -254,7 +261,9 @@ router.post("/quiz/:quizId/submit", quizLimiter, async (req, res) => {
 
   const { data: app, error: appErr } = await supabaseAdmin
     .from("recruitment_applications")
-    .select("id, email, payment_status, status, round1_status")
+    .select(
+      "id, email, domain, academic_year, payment_status, status, round1_status",
+    )
     .eq("id", applicationId)
     .maybeSingle();
 
@@ -288,6 +297,30 @@ router.post("/quiz/:quizId/submit", quizLimiter, async (req, res) => {
     return;
   }
 
+  const { quiz: assignedQuiz, error: assignedQuizErr } =
+    await findPublishedQuizForApplicant(app.domain, app.academic_year);
+
+  if (assignedQuizErr) {
+    req.log.error(
+      { assignedQuizErr },
+      "Failed to resolve assigned quiz for submission",
+    );
+    res.status(500).json({ error: "Database error" });
+    return;
+  }
+  if (!assignedQuiz) {
+    res
+      .status(404)
+      .json({ error: "No active quiz is available for your domain" });
+    return;
+  }
+  if (assignedQuiz.id !== quizId) {
+    res.status(403).json({
+      error: "This quiz is not the one assigned to your application",
+    });
+    return;
+  }
+
   const { data: questions, error: qErr } = await supabaseAdmin
     .from("quiz_questions")
     .select("id, correct_option_index, marks")
@@ -308,20 +341,14 @@ router.post("/quiz/:quizId/submit", quizLimiter, async (req, res) => {
     }
   }
 
-  const { data: quizMeta } = await supabaseAdmin
-    .from("quizzes")
-    .select("passing_score")
-    .eq("id", quizId)
-    .maybeSingle();
-
-  const passed = score >= (quizMeta?.passing_score ?? 0);
+  const passed = score >= assignedQuiz.passing_score;
 
   const { error: subErr } = await supabaseAdmin
     .from("quiz_submissions")
     .insert({
       quiz_id: quizId,
       email,
-      application_id: applicationId ?? null,
+      application_id: applicationId,
       answers,
       score,
       total,
