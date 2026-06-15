@@ -26,3 +26,11 @@ check is the only gate.
 gate it with `isRecruitmentWindowOpen(quiz.academic_year)` and resolve quizzes by
 exact academic_year. Keep the `testLive` definition in `/recruitment/status` and
 the quiz-resolution rule in lockstep — if one changes, change the other.
+
+**Caveat (no single-open-window enforcement):** nothing at the DB/admin layer
+guarantees at most one `is_open=true` window. `/recruitment/status` picks the
+most-recently-updated open window, but quiz endpoints accept ANY open year. So if
+two years are left open, the public landing can show one year's state while an
+older open year's quiz stays directly fetchable. Not a closed-window leak, but it
+breaks the "single current window" mental model. If hardening: add a partial
+unique index on `is_open=true` and atomically close other windows when opening.

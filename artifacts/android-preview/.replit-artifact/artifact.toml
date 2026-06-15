@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/android-preview/"
+title = "Android App Prototype"
+version = "1.0.0"
+id = "artifacts/android-preview"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/android-preview/" ]
+localPort = 21420
+
+[services.development]
+run = "pnpm --filter @workspace/android-preview run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/android-preview", "run", "build" ]
+publicDir = "artifacts/android-preview/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21420"
+BASE_PATH = "/android-preview/"
