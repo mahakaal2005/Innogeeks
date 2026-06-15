@@ -26,6 +26,7 @@ class AuthViewModel(private val repo: AuthRepository) : ViewModel() {
 
     fun signIn() {
         val current = _state.value
+        if (current.loading) return
         if (current.email.isBlank() || current.password.isBlank()) {
             _state.update { it.copy(error = "Enter your email and password.") }
             return
