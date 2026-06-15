@@ -7,12 +7,11 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.innogeeks.core.di.AppContainer
-import com.example.innogeeks.feature.auth.AuthRepository
 import com.example.innogeeks.feature.auth.AuthViewModel
 import com.example.innogeeks.feature.auth.LoginScreen
 import com.example.innogeeks.feature.home.HomeScreen
@@ -34,7 +33,13 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun AppRoot(container: AppContainer) {
-    val factory = remember(container) { viewModelFactory(container.authRepository) }
+    // Modern lifecycle 2.9+ factory DSL — no manual ViewModelProvider.Factory override.
+    val factory = remember(container) {
+        viewModelFactory {
+            initializer { AuthViewModel(container.authRepository) }
+            initializer { HomeViewModel(container.authRepository) }
+        }
+    }
     val session by container.authRepository.sessionFlow.collectAsStateWithLifecycle(initialValue = null)
 
     if (session == null) {
@@ -43,14 +48,5 @@ private fun AppRoot(container: AppContainer) {
     } else {
         val homeVm: HomeViewModel = viewModel(factory = factory)
         HomeScreen(homeVm)
-    }
-}
-
-private fun viewModelFactory(repo: AuthRepository) = object : ViewModelProvider.Factory {
-    @Suppress("UNCHECKED_CAST")
-    override fun <T : ViewModel> create(modelClass: Class<T>): T = when {
-        modelClass.isAssignableFrom(AuthViewModel::class.java) -> AuthViewModel(repo) as T
-        modelClass.isAssignableFrom(HomeViewModel::class.java) -> HomeViewModel(repo) as T
-        else -> throw IllegalArgumentException("Unknown ViewModel: ${modelClass.name}")
     }
 }

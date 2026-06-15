@@ -1,2 +1,3 @@
 - [Quiz site no-login model](quiz-site-no-login.md) — Round 1 quiz uses KIET-email-only identity (no auth) by deliberate design; runs on invigilated college PCs. Don't "fix" it by adding login.
 - [Android build workflow](android-build-workflow.md) — Replit can't compile/run native Android; user builds in Android Studio and round-trips code via GitHub. Agent writes Kotlin only.
+- [Android lifecycle 2.9.0 ViewModel factory](android-lifecycle-290.md) — don't hand-write a Class-based ViewModelProvider.Factory (breaks on 2.9.0); use viewModelFactory{} DSL + keep all lifecycle artifacts one version.
