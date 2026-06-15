@@ -9,7 +9,7 @@ const KIET_EMAIL_DOMAIN = "@kiet.edu";
 
 const SubmitQuizSchema = z.object({
   email: z.email(),
-  applicationId: z.uuid().optional(),
+  applicationId: z.uuid(),
   answers: z.record(z.string(), z.number().int().min(0)),
 });
 
@@ -34,7 +34,7 @@ router.post("/quiz/validate-email", quizLimiter, async (req, res) => {
 
   const { data: app, error: appErr } = await supabaseAdmin
     .from("recruitment_applications")
-    .select("id, name, domain, academic_year, payment_status, round1_status")
+    .select("id, name, domain, academic_year, payment_status, status, round1_status")
     .eq("email", email)
     .order("created_at", { ascending: false })
     .limit(1)
@@ -172,6 +172,14 @@ router.post("/quiz/validate-email", quizLimiter, async (req, res) => {
     return;
   }
 
+  if (app.status !== "round1_qualified") {
+    res.status(403).json({
+      error:
+        "You haven't been shortlisted for Round 1 yet. Please wait for confirmation from a coordinator.",
+    });
+    return;
+  }
+
   if (questionCount === 0) {
     res.status(404).json({
       error:
@@ -244,31 +252,40 @@ router.post("/quiz/:quizId/submit", quizLimiter, async (req, res) => {
     return;
   }
 
-  if (applicationId) {
-    const { data: app } = await supabaseAdmin
-      .from("recruitment_applications")
-      .select("id, email, payment_status, round1_status")
-      .eq("id", applicationId)
-      .maybeSingle();
+  const { data: app, error: appErr } = await supabaseAdmin
+    .from("recruitment_applications")
+    .select("id, email, payment_status, status, round1_status")
+    .eq("id", applicationId)
+    .maybeSingle();
 
-    if (!app) {
-      res.status(404).json({ error: "Application not found" });
-      return;
-    }
-    if (app.email !== email) {
-      res.status(400).json({ error: "Email does not match application" });
-      return;
-    }
-    if (app.payment_status !== "approved") {
-      res
-        .status(403)
-        .json({ error: "Payment not approved — cannot take quiz yet" });
-      return;
-    }
-    if (app.round1_status !== "pending") {
-      res.status(409).json({ error: "Round 1 already attempted" });
-      return;
-    }
+  if (appErr) {
+    req.log.error({ appErr }, "Failed to fetch application for submission");
+    res.status(500).json({ error: "Database error" });
+    return;
+  }
+  if (!app) {
+    res.status(404).json({ error: "Application not found" });
+    return;
+  }
+  if (app.email !== email) {
+    res.status(400).json({ error: "Email does not match application" });
+    return;
+  }
+  if (app.payment_status !== "approved") {
+    res
+      .status(403)
+      .json({ error: "Payment not approved — cannot take quiz yet" });
+    return;
+  }
+  if (app.status !== "round1_qualified") {
+    res
+      .status(403)
+      .json({ error: "You aren't eligible to take Round 1 yet" });
+    return;
+  }
+  if (app.round1_status !== "pending") {
+    res.status(409).json({ error: "Round 1 already attempted" });
+    return;
   }
 
   const { data: questions, error: qErr } = await supabaseAdmin
@@ -323,28 +340,23 @@ router.post("/quiz/:quizId/submit", quizLimiter, async (req, res) => {
     return;
   }
 
-  if (applicationId) {
-    const newRound1Status = passed ? "cleared" : "failed";
-    const newStatus = passed ? "round1_qualified" : undefined;
+  const update: Record<string, string> = {
+    round1_status: passed ? "cleared" : "failed",
+    updated_at: new Date().toISOString(),
+  };
+  if (passed) update["status"] = "round2_qualified";
 
-    const update: Record<string, string> = {
-      round1_status: newRound1Status,
-      updated_at: new Date().toISOString(),
-    };
-    if (newStatus) update["status"] = newStatus;
+  const { error: updateErr } = await supabaseAdmin
+    .from("recruitment_applications")
+    .update(update)
+    .eq("id", applicationId)
+    .eq("email", email);
 
-    const { error: updateErr } = await supabaseAdmin
-      .from("recruitment_applications")
-      .update(update)
-      .eq("id", applicationId)
-      .eq("email", email);
-
-    if (updateErr) {
-      req.log.error(
-        { updateErr, applicationId },
-        "Quiz scored but application status update failed",
-      );
-    }
+  if (updateErr) {
+    req.log.error(
+      { updateErr, applicationId },
+      "Quiz scored but application status update failed",
+    );
   }
 
   req.log.info({ quizId, email, score, total, passed }, "Quiz scored");

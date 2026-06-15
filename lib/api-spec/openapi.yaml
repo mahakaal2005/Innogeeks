@@ -560,7 +560,7 @@ components:
           additionalProperties:
             type: integer
           description: Map of questionId to selected option index
-      required: [email, answers]
+      required: [email, applicationId, answers]
 
     QuizSubmitResponse:
       type: object

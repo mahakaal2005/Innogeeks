@@ -9,7 +9,7 @@ import type { QuizSubmitRequestAnswers } from './quizSubmitRequestAnswers';
 
 export interface QuizSubmitRequest {
   email: string;
-  applicationId?: string;
+  applicationId: string;
   /** Map of questionId to selected option index */
   answers: QuizSubmitRequestAnswers;
 }

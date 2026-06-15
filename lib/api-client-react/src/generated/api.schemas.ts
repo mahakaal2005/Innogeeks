@@ -93,7 +93,7 @@ export type QuizSubmitRequestAnswers = {[key: string]: number};
 
 export interface QuizSubmitRequest {
   email: string;
-  applicationId?: string;
+  applicationId: string;
   /** Map of questionId to selected option index */
   answers: QuizSubmitRequestAnswers;
 }

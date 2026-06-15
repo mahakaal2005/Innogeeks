@@ -110,7 +110,7 @@ export const SubmitQuizParams = zod.object({
 
 export const SubmitQuizBody = zod.object({
   "email": zod.string().email(),
-  "applicationId": zod.string().uuid().optional(),
+  "applicationId": zod.string().uuid(),
   "answers": zod.record(zod.string(), zod.number()).describe('Map of questionId to selected option index')
 })
 
