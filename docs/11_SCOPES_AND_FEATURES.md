@@ -75,8 +75,8 @@ approve an ML applicant's cash, or see Android resources.
 | Surface | Primary users | Auth | Status |
 | :--- | :--- | :--- | :--- |
 | **Quiz site — public** (`/`) | Public, applicants | None (KIET email) | ✅ Live |
-| **Club Info admin** (`/admin/club-info`) | Core team | Supabase email+password | ✅ Live |
-| **Android app** | Members, coordinators, core team | Supabase Auth | 🟡 Login + home shell only |
+| **Admin / Web Panel** (`/admin/*`) | Core team, Coordinators, Applicants (forms) | Supabase Auth | 🟡 Live for Club Info, forms planned |
+| **Android app** | Guests, Members, coordinators, core team | None (Guests) / Supabase Auth (Members) | 🟡 Onboarding, Auth, & Shell |
 | **API server** (`/api`) | All (trust boundary) | Bearer JWT | ✅ Live |
 
 > ⚠️ **Open decision:** the member/coordinator/core-team experience is currently
@@ -87,7 +87,7 @@ approve an ML applicant's cash, or see Android resources.
   resources, events, registration insert, profile edits. The client holds a user JWT;
   RLS is the guard.
 - **Trusted Express (service-role):** anything needing secrets, atomicity, or server
-  trust — Razorpay orders + webhook, quiz scoring (`submit_quiz` RPC), final role
+  trust — quiz scoring (`submit_quiz` RPC), final role
   assignment (`assign_member_role` RPC), Cloudinary signing, recruitment-window state,
   Club Info writes.
 
@@ -104,11 +104,11 @@ approve an ML applicant's cash, or see Android resources.
 | Sub-feature | Who | Tables | Ops | Status |
 | :--- | :--- | :--- | :--- | :--- |
 | Open/close recruitment window | Core team | `recruitment_windows` | Express | 🟡 no UI |
-| Register application (KIET email + domain) | Applicant | `recruitment_applications` | Supabase (RLS) | ⬜ no endpoint/UI |
-| Pay fee — UPI | Applicant | `recruitment_applications` | Express + Razorpay webhook | 🟡 server only |
+| Register application (Form) | Applicant | `recruitment_applications` | Web Panel (Form) | ⬜ Planned for Web |
+| Pay fee — Manual (Cash/UPI) | Applicant | `recruitment_applications` | Manual (Google Sheets/DB Input) | 🟡 Planned for Web |
 | Pay fee — cash approval | Coordinator (own) / Core | `recruitment_applications` | Express | 🟡 no UI |
-| Shortlist for Round 1 (`status=round1_qualified`) | Coordinator / Core | `recruitment_applications` | Supabase (RLS) | ⬜ **gap: no endpoint/UI** |
-| Round 1 quiz (take + auto-score) | Applicant | `quizzes`, `quiz_questions`, `quiz_submissions` | Express (scoring) | ✅ Live (quiz site) |
+| Shortlist for Round 1 (`status=round1_qualified`) | Coordinator / Core | `recruitment_applications` | Web Panel (Admin) | ⬜ Planned for Web |
+| Round 1 quiz (testing round) | Applicant | `quizzes`, `quiz_questions`, `quiz_submissions` | Express (scoring) | ✅ Live (quiz site) |
 | Author/publish quizzes | Core team | `quizzes`, `quiz_questions` | Supabase (RLS), Core | 🟡 no UI |
 | Round 2 interview review | Coordinator (own) / Core | `recruitment_applications` | Express | 🟡 no UI |
 | Final selection → member | Core team | `recruitment_applications`, `profiles`, `role_change_log` | Express RPC | 🟡 no UI |
@@ -182,24 +182,15 @@ open window (not by login role).
 
 ---
 
-## Part E — Open decisions to finalize the definition
+## Part E — Resolved Decisions
 
-These shape **what UI we build**, so let's settle them before design:
+These shape **what UI we build**, based on recent architectural shifts:
 
-1. **Surface strategy (biggest one).** Member / coordinator / core-team features are
-   currently specced for **Android only**, which Replit can't build or run. Options:
-   - **(A) Web app** — build a web dashboard for members/coordinators/core team here
-     (buildable + testable now); keep Android as a later port.
-   - **(B) Android-only** — keep specs Android-only; we'd only design, not run it here.
-   - **(C) Hybrid** — web for admin/coordinator tooling, Android for members.
-
-2. **First build target.** Which area gets the first real UI? e.g. recruitment admin
-   (fills the biggest gaps: shortlisting, Round 2, selection), or the member dashboard
-   (attendance + resources + events), or the applicant register/pay flow.
-
-3. **Close the two recruitment gaps** — registration and shortlisting currently have no
-   front door. Confirm both should become proper screens (and trusted endpoints where
-   needed).
-
-4. **Catalog completeness** — anything to add or drop before we design (e.g. promote
-   Analytics/Notifications into scope now, or defer).
+1. **Surface strategy.** Recruitment (registration, fee payment, form filling, shortlisting) has been moved entirely to the **Admin/Web Panel**. 
+2. **Mobile App Role.** The Android app is strictly for:
+   - **Guests**: Limited view (public club info, events).
+   - **Members / Coordinators / Core Team**: Authenticated via Supabase.
+3. **App Authentication.** A specific onboarding flow exists:
+   - "Login" vs "Continue as Guest".
+   - Login is email-first. First-time login requires password setup. Non-members cannot log in.
+4. **Recruitment Process.** UPI payment is one-time (via QR on the web) during recruitment registration. Round 1 is a testing round to reduce crowds for Round 2 interviews.

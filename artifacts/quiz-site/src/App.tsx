@@ -11,6 +11,12 @@ import Landing from "@/pages/landing";
 import Quiz from "@/pages/quiz";
 import Result from "@/pages/result";
 import AdminClubInfo from "@/pages/admin-club-info";
+import ApplyPage from "@/pages/apply";
+import PaymentPage from "@/pages/payment";
+import AdminDashboard from "@/pages/admin-dashboard";
+import AdminRecruitment from "@/pages/admin-recruitment";
+import AdminMembers from "@/pages/admin-members";
+import { AdminEvents, AdminBroadcasts } from "@/pages/admin-placeholders";
 
 const queryClient = new QueryClient();
 
@@ -21,6 +27,13 @@ function Router() {
         <Route path="/" component={Landing} />
         <Route path="/quiz" component={Quiz} />
         <Route path="/result" component={Result} />
+        <Route path="/apply" component={ApplyPage} />
+        <Route path="/payment" component={PaymentPage} />
+        <Route path="/admin" component={AdminDashboard} />
+        <Route path="/admin/recruitment" component={AdminRecruitment} />
+        <Route path="/admin/members" component={AdminMembers} />
+        <Route path="/admin/events" component={AdminEvents} />
+        <Route path="/admin/broadcasts" component={AdminBroadcasts} />
         <Route path="/admin/club-info" component={AdminClubInfo} />
         <Route component={NotFound} />
       </Switch>

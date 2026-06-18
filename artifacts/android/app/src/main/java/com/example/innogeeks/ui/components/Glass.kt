@@ -13,32 +13,26 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.innogeeks.ui.theme.AccentBlue
-import com.example.innogeeks.ui.theme.BgBase
-import com.example.innogeeks.ui.theme.BgEnd
-import com.example.innogeeks.ui.theme.BgMid
 import com.example.innogeeks.ui.theme.GlassBorder
 import com.example.innogeeks.ui.theme.GlassFill
-import com.example.innogeeks.ui.theme.TextMuted
-import com.example.innogeeks.ui.theme.TextPrimary
 
 @Composable
 fun GradientBackground(content: @Composable BoxScope.() -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Brush.linearGradient(listOf(BgBase, BgMid, BgEnd))),
+            .background(MaterialTheme.colorScheme.background),
         content = content,
     )
 }
@@ -50,9 +44,9 @@ fun GlassCard(
 ) {
     Column(
         modifier = modifier
-            .background(GlassFill, RoundedCornerShape(16.dp))
-            .border(1.dp, GlassBorder, RoundedCornerShape(16.dp))
-            .padding(20.dp),
+            .background(MaterialTheme.colorScheme.surface, RoundedCornerShape(8.dp))
+            .border(1.dp, GlassBorder, RoundedCornerShape(8.dp))
+            .padding(16.dp),
         content = content,
     )
 }
@@ -69,14 +63,14 @@ fun PrimaryButton(
         enabled = enabled,
         modifier = modifier
             .fillMaxWidth()
-            .height(52.dp),
-        shape = RoundedCornerShape(12.dp),
+            .height(48.dp),
+        shape = RoundedCornerShape(8.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = AccentBlue,
-            contentColor = Color.White,
+            containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary,
         ),
     ) {
-        Text(text)
+        Text(text, style = MaterialTheme.typography.labelLarge)
     }
 }
 
@@ -91,18 +85,19 @@ fun GlassTextField(
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(label) },
+        label = { Text(label, style = MaterialTheme.typography.labelSmall) },
         singleLine = true,
         visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
         modifier = modifier.fillMaxWidth(),
+        textStyle = MaterialTheme.typography.bodyMedium,
         colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = AccentBlue,
-            unfocusedBorderColor = GlassBorder,
-            focusedTextColor = TextPrimary,
-            unfocusedTextColor = TextPrimary,
-            focusedLabelColor = AccentBlue,
-            unfocusedLabelColor = TextMuted,
-            cursorColor = AccentBlue,
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+            focusedTextColor = MaterialTheme.colorScheme.onSurface,
+            unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
+            focusedLabelColor = MaterialTheme.colorScheme.primary,
+            unfocusedLabelColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            cursorColor = MaterialTheme.colorScheme.primary,
         ),
     )
 }
@@ -115,6 +110,6 @@ fun Pill(text: String, color: Color, modifier: Modifier = Modifier) {
             .border(1.dp, color.copy(alpha = 0.4f), RoundedCornerShape(50))
             .padding(horizontal = 12.dp, vertical = 4.dp),
     ) {
-        Text(text, color = color, fontSize = 12.sp)
+        Text(text, color = color, style = MaterialTheme.typography.labelSmall)
     }
 }

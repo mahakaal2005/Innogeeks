@@ -40,7 +40,7 @@ This is the reference we'll use when refining the UI.
 
 **Trust boundary:** Android + quiz site talk to Supabase directly (RLS enforces who
 can read/write what). The Express API server only handles things that need
-service-role trust or secrets: Razorpay, quiz scoring, role promotion, Cloudinary
+service-role trust or secrets: quiz scoring, role promotion, Cloudinary
 signing, recruitment-window state.
 
 ---
@@ -94,24 +94,21 @@ flowchart TD
 - Club Info content is read from `GET /api/club-info` (managed by core team).
 
 ### 4.2 Opening the Android app (before joining) — ⬜ Planned
-- Spec: see public club info / recruitment CTA, then sign up to apply.
-- Today: app opens to a **login screen**; no public/onboarding screen yet.
+- Spec: see "Onboarding Screen" with options to "Login" or "Continue as Guest".
+- Guest View: Can see public club info, events, etc., but cannot log in or apply directly from the app (recruitment forms live on the web).
 
 ---
 
 ## 5. Applicant — the recruitment journey
 
-This journey **spans two surfaces**: the **Android app** (authenticated:
-register + pay + track status) and the **quiz site** (no-login, invigilated PCs:
-Round 1 test).
+This journey **spans two web surfaces**: the **Admin/Web Panel** (public registration form, pay fee via UPI QR) and the **quiz site** (no-login, invigilated PCs: Round 1 test). *Note: The mobile app is not used for recruitment.*
 
 ```mermaid
 flowchart TD
-    R[1. Register<br/>KIET email + domain<br/>⬜ app → Supabase insert] --> P[2. Pay fee]
-    P -->|UPI| U[POST /api/payments/orders<br/>→ Razorpay → webhook<br/>payment_status=approved ✅]
-    P -->|Cash| K[Coordinator approves<br/>POST /api/recruitment/approve-cash ✅]
+    R[1. Register<br/>KIET email + domain + Form<br/>⬜ Google Sheets] --> P[2. Pay fee<br/>Manual Cash/UPI]
+    P --> U[Core team inputs to DB<br/>payment_status=approved ✅]
     U --> S[3. Coordinator shortlists<br/>status=round1_qualified<br/>⬜ via Supabase/RLS]
-    K --> S
+
     S --> Q[4. Round 1 quiz<br/>quiz site, invigilated ✅]
     Q -->|passed| C1[round1_status=cleared]
     Q -->|failed| F1[round1_status=failed]
@@ -125,12 +122,12 @@ flowchart TD
 
 | # | Step | Surface | Mechanism | Status |
 | :- | :--- | :--- | :--- | :--- |
-| 1 | Register (KIET email, name, roll, domain) | Android app | Direct Supabase insert (RLS) — no trusted endpoint | ⬜ Planned |
-| 2a | Pay by **UPI** | Android app | `POST /api/payments/orders` → Razorpay order; webhook `payment.captured` sets `payment_status=approved` | ✅ Built (server) / ⬜ app UI |
+| 1 | Register (Form: email, name, domain, etc.) | Web Panel | Direct Supabase insert / form submission | ⬜ Planned |
+| 2a | Pay by **UPI** (First time only) | Web Panel | Shows QR code for payment; webhook `payment.captured` sets `payment_status=approved` | ✅ Built (server) / ⬜ UI |
 | 2b | Pay by **cash** | In person | Coordinator/core team `POST /api/recruitment/approve-cash` (own domain only for coordinators) | ✅ Built (server) |
-| 3 | Shortlist for Round 1 | Admin | Set `status=round1_qualified` via Supabase (RLS) — **no dedicated trusted endpoint today** | ⬜ Gap |
-| 4 | Round 1 quiz | **Quiz site** | `validate-email` → `GET /quiz/:id` → `submit` (auto-scored, sets `round1_status`) | ✅ Built |
-| 5 | Round 2 interview | Admin | `POST /api/recruitment/review-round2` (requires `round1_status=cleared`) | ✅ Built (server) |
+| 3 | Shortlist for Round 1 | Admin | Set `status=round1_qualified` via Supabase (RLS) based on form evaluation | ⬜ Gap |
+| 4 | Round 1 quiz (testing round) | **Quiz site** | `validate-email` → `GET /quiz/:id` → `submit` (auto-scored) | ✅ Built |
+| 5 | Round 2 interview (less crowd) | Admin | `POST /api/recruitment/review-round2` (requires `round1_status=cleared`) | ✅ Built (server) |
 | 6 | Final selection | Core team | `POST /api/recruitment/assign-role` → `assign_member_role` RPC promotes to `member` | ✅ Built (server) |
 
 ### 5.1 Round 1 quiz (quiz site) — ✅ Built, step-by-step
@@ -206,19 +203,42 @@ Full access. Inherits coordinator + member abilities across **all domains**.
 | Edit public Club Info page | `PUT /api/club-info` (+ audit history row) | ✅ Built |
 | View Club Info edit history | `GET /api/club-info/history` | ✅ Built |
 
-### 8.1 Club Info admin (quiz site `/admin/club-info`) — ✅ Built
+### 8.1 Admin Web Panel Hub (quiz site `/admin`) — ⬜ Planned
+
+Since recruitment and club management have moved away from the Android app, the `/admin` route on the Web Panel serves as the central hub for the `core_team` (and partially for `coordinator`s).
+
 ```mermaid
 flowchart TD
-    A[/admin/club-info] --> B{Logged in?}
+    A[/admin] --> B{Logged in?}
     B -- no --> C[Email + password login<br/>Supabase Auth]
-    B -- yes --> D[Editor: hero · about · domains · gallery · socials]
-    D --> E[Image upload<br/>POST /api/cloudinary/sign → Cloudinary]
-    D --> F[Save → PUT /api/club-info]
-    F --> G[History panel refreshes<br/>GET /api/club-info/history]
+    B -- yes --> D[Admin Dashboard<br/>Metrics & Alerts]
+    
+    D -->|Click 'Members'| E[Manage Roles & Members<br/>POST /api/admin/set-role]
+    D -->|Click 'Recruitment'| F[Recruitment Hub<br/>POST /api/recruitment/*]
+    D -->|Click 'Events'| G[Events & Sessions]
+    D -->|Click 'Broadcast'| H[Broadcast Center]
+    D -->|Click 'Edit Website'| I[Club Info Editor<br/>PUT /api/club-info]
+    
+    I --> J[Save → History Refreshes]
 ```
-> Any authenticated user can load the editor shell, but **only core team can save**
-> — `PUT /club-info` is `requireCoreTeam`, enforced server-side. Each save writes a
-> snapshot to `club_info_history` (who + when), surfaced in the side panel.
+
+> Any authenticated user can load the admin shell, but features are role-gated. Only `core_team` can save Club Info or manage all domains. `coordinator`s have restricted access to their domain's recruitment and events.
+
+### 8.2 Android App Admin Drill-Down Flow — ✅ Built
+
+The mobile app provides a dedicated **Admin Dashboard** and drill-down flow for `core_team` and `coordinator` roles to monitor the club on the go.
+
+```mermaid
+flowchart TD
+    A[Admin Dashboard<br/>2x2 Stats Grid] -->|Tap a Domain| B[Domain Roster<br/>Coordinators & Members]
+    B -->|Tap a Member| C[Member Profile<br/>Attendance & Recruitment Records]
+```
+
+**Key UI Details (Locked In):**
+- **SaaS Dark Aesthetic**: Uses a `#050505` foundation, `#111` surface cards, and a frosted sticky header.
+- **Data Density**: Simplified 2x2 stat grid (Members, Domains, Coordinators, New Joinees) without cluttered charts or actions.
+- **Domain Directory**: Fast access to domain-specific rosters.
+- **Deep Dive**: Individual member profiles prominently display their attendance ring and their Round 1 / Round 2 recruitment history.
 
 ---
 
@@ -245,11 +265,11 @@ shortlist + open window — not by login role.
 ## 10. Known gaps to resolve before/while refining UI
 
 1. **Registration has no trusted endpoint** — initial application insert relies on
-   Supabase RLS directly; no Android UI yet.
+   Supabase RLS directly; needs Web Panel UI.
 2. **Shortlisting (`status=round1_qualified`) has no endpoint or UI** — currently a
    manual DB/RLS update. This is the one step with no front door.
-3. **Android feature modules** (recruitment, attendance, resources, admin) are
-   specced but not built — only login + a home shell exist.
+3. **Android feature modules** (attendance, resources) are
+   specced but not built. **Admin module** has been built (Drill-down flow). Recruitment has been moved out.
 4. **Member/coordinator surfaces** (attendance, resources, events) exist in the DB
    schema and docs but have no UI.
 5. **Single-open-window** isn't enforced at the DB level (see

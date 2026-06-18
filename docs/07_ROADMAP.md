@@ -12,12 +12,12 @@
 
 | Deployable / Module | Features |
 |---|---|
-| **Supabase backend** | Postgres + Auth + RLS (auto REST API); thin trusted Express server for payments, quiz scoring, Round 2 → role assignment, Cloudinary signing; OpenAPI contract, indexes, transactions |
+| **Supabase backend** | Postgres + Auth + RLS (auto REST API); thin trusted Express server for quiz scoring, Round 2 → role assignment, Cloudinary signing; OpenAPI contract, indexes, transactions |
 | **Android app** | Kotlin + Compose (MVVM/Clean Arch), offline-first, primary client for all 4 roles |
 | **Quiz website** | React + Vite, Round 1 test, auto-scoring → updates `round1_status` via the same API |
 | Auth | Supabase Auth (email + password), 4 roles, RLS-enforced, role assignment by core team |
 | Public Section | Club info, domains, events listing, recruitment banner (in app) |
-| Recruitment | Registration form, **Razorpay UPI QR** + cash payment, status tracker, Round 1 quiz + Round 2 marking, window toggle |
+| Recruitment | Manual Google Sheets Registration + cash/UPI payment, status tracker, Round 1 quiz + Round 2 marking, window toggle |
 | Attendance | Session creation, mark attendance, member/coordinator/core views |
 | Resources | Domain folders (2 levels), PDF upload, link upload, folder rename/reorder |
 | Events | Create event, set scope (open/members), public listing, user registration, post-event attendance |
@@ -81,7 +81,7 @@ These were considered but intentionally not planned for any release yet:
 | In-app chat / messaging | Deferred to v2.0; the API is intentionally WebSocket-ready so it can be added without redesign |
 | 4th year alumni-specific role | 4th year = core team role in MVP; special view deferred to v2.0 |
 | iOS app | Android-only in v1.0; iOS deferred to v2.0 |
-| Payment reconciliation reports | Built on top of the v1.0 Razorpay integration |
+| Payment reconciliation reports | Built on top of the manual Google Sheets integration |
 
 ---
 
@@ -89,10 +89,10 @@ These were considered but intentionally not planned for any release yet:
 
 | Date | Decision | Reason |
 |---|---|---|
-| June 2026 | Razorpay UPI QR in MVP (not manual screenshots) | Automated, verifiable, idempotent payments; removes manual review for UPI |
+| June 2026 | Manual Registration via Google Sheets | Replaced Razorpay with manual cash/UPI collection because users will likely not install the app just to register |
 | June 2026 | Android native app is the primary client; no web frontend for members/organizers | User requirement; one app + one backend + one quiz site |
 | June 2026 | **Supabase-native backend** (managed Postgres + Auth + RLS + auto REST API) instead of self-managed Postgres + Clerk | Auth, authorization (RLS), and a REST API out of the box; clients query the DB directly and securely; far less server code to maintain at 5,000+ users |
-| June 2026 | **Thin trusted Express server** only for secret/trust operations (Razorpay, quiz scoring, Round 2 → role assignment, Cloudinary signing) | Everything else is handled directly by Supabase under RLS |
+| June 2026 | **Thin trusted Express server** only for secret/trust operations (quiz scoring, Round 2 → role assignment, Cloudinary signing) | Everything else is handled directly by Supabase under RLS |
 | June 2026 | **Cloudinary** for file storage (PDFs/banners) instead of Replit Object Storage | Signed direct uploads, CDN delivery, no server proxying of files |
 | June 2026 | Round 1 is an online quiz on a separate website (auto-scored by the trusted server) | Auto-scores and updates status; Supabase is the single source of truth |
 | June 2026 | Kotlin 2.4.0 + Compose BOM 2026.05.00 | Latest stable verified June 2026 |

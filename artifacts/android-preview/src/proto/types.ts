@@ -1,17 +1,23 @@
 import type { Role, Domain } from "./theme";
 
 export type ScreenKey =
-  | "login"
+  | "onboarding"
+  | "login_email"
+  | "login_password"
+  | "forgot_password"
+  | "check_email"
+  | "guest_home"
   | "home"
-  | "application"
-  | "apply"
-  | "payment"
-  | "quiz"
   | "attendance"
   | "resources"
   | "events"
   | "coordinator"
-  | "admin";
+  | "coordinator_attendance"
+  | "admin"
+  | "admin_events"
+  | "admin_broadcast"
+  | "admin_domain"
+  | "admin_member_profile";
 
 export type Round2State = "none" | "scheduled" | "cleared";
 
@@ -29,7 +35,8 @@ export interface Ctx {
   name: string;
   windowOpen: boolean;
   progress: Progress;
-  go: (screen: ScreenKey) => void;
+  params: Record<string, any>;
+  go: (screen: ScreenKey, params?: Record<string, any>) => void;
   back: () => void;
   signIn: () => void;
   signOut: () => void;

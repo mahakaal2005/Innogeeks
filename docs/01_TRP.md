@@ -10,7 +10,7 @@
 A platform for Club Innogeeks at KIET Group of Institutions, made up of three deployables on a **Supabase-native** backbone:
 
 1. **Supabase backend** (managed PostgreSQL + Auth + Row-Level Security + auto-generated REST/Realtime API) — the single source of truth for all data and the primary authorization boundary.
-2. **Trusted Express server** (Node.js 24 + TypeScript) — a thin, stateless service for operations that need secrets or server-side trust: Razorpay payments, quiz auto-scoring, Round 2 → role assignment, and Cloudinary upload signing.
+2. **Trusted Express server** (Node.js 24 + TypeScript) — a thin, stateless service for operations that need secrets or server-side trust: quiz auto-scoring, Round 2 → role assignment, and Cloudinary upload signing.
 3. **Android app** (Kotlin + Jetpack Compose) — the **primary client** for all four roles (public, member, coordinator, core team). Talks directly to Supabase (RLS-guarded) and to the trusted server for the few protected operations.
 4. **Quiz website** (React + Vite) — a lightweight site students open on college computers to take the Round 1 recruitment test; auto-scored by the trusted server.
 
@@ -73,7 +73,7 @@ The five club domains, each treated as a distinct unit for attendance and resour
 ### 5.1 Recruitment Module
 - Registration form (name, roll no., KIET email, domain preference).
 - Payment:
-  - UPI QR via **Razorpay** (order created by the trusted server) → webhook-verified → `round1_qualified`.
+  - Manual registration (Google Sheets tracking) → manual update to `round1_qualified`.
   - Cash → `cash_pending` → manual approval by coordinator/core team → `round1_qualified`.
 - Round 1: online quiz on the **quiz website**; the trusted server auto-scores on submission and updates `round1_status` (`cleared`/`failed`) — no manual entry.
 - Round 2: interview — coordinators + core team score on rubrics; on clear, the system assigns `member` role + domain (atomic).
@@ -110,7 +110,7 @@ The five club domains, each treated as a distinct unit for attendance and resour
 | ORM / migrations | Drizzle ORM + drizzle-kit (`push`); RLS & triggers applied as raw SQL |
 | Validation | Zod (`zod/v4`) + `drizzle-zod` |
 | File Storage | **Cloudinary** (signed direct uploads for PDFs/banners) |
-| Payments | **Razorpay** (UPI QR) + manual cash flow |
+| Payments | **Manual registration (Google Sheets)** |
 | Security | RLS (primary); Helmet v8, express-rate-limit v7, CORS, body limits (trusted server) |
 | API Contract | OpenAPI spec → Orval codegen (trusted endpoints) |
 | Hosting | Replit (dev) → Replit Deployments (prod); Supabase managed |
@@ -188,7 +188,7 @@ See `08_ANDROID_ARCHITECTURE.md` for the full Android architecture.
 | File uploads | Signed **Cloudinary** uploads with server-enforced type/size and randomized public IDs |
 | Email validation | `@kiet.edu` enforced server-side (regex + domain check) |
 | Quiz integrity | Correct answers never leave the server; scoring is server-only |
-| Secrets | Supabase service-role key, Razorpay keys, Cloudinary secret only on the trusted server; never returned to clients |
+| Secrets | Supabase service-role key, Cloudinary secret only on the trusted server; never returned to clients |
 | Transport | HTTPS only in production; certificate pinning enforced by the Android client |
 
 ---

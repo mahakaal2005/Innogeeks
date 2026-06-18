@@ -7,26 +7,7 @@ Items are roughly ordered by severity.
 
 ## 🔴 Critical / Security
 
-### 1. `timingSafeEqual` without length check (payments webhook)
-**File:** `artifacts/api-server/src/routes/payments.ts` — webhook handler
 
-**Problem:**  
-`crypto.timingSafeEqual(a, b)` throws if `a.length !== b.length`. A Razorpay
-webhook request with a malformed (wrong-length) `x-razorpay-signature` header
-will cause an unhandled exception → 500, making it trivial to DoS webhook
-processing.
-
-**Fix:**
-```ts
-const sigBuf = Buffer.from(signature, "utf8");
-const expBuf = Buffer.from(expected, "utf8");
-if (sigBuf.length !== expBuf.length || !crypto.timingSafeEqual(sigBuf, expBuf)) {
-  res.status(400).json({ error: "Invalid signature" });
-  return;
-}
-```
-
----
 
 ## 🟠 High / Data Integrity
 
@@ -114,20 +95,17 @@ whether this needs an Express route or RLS is sufficient.
 
 **Current values:**
 - General: 120 req/min
-- Payment: 20 req/min
 - Quiz: 5 req/min
 
 **Suggested stricter tiers:**
 - Public (unauthenticated): 100 req/15min
 - Authenticated: 500 req/15min
-- Payment: 10 req/hour
 - Quiz submit: 5 req/15min
 
 **Fix:**
 ```ts
 export const generalLimiter = rateLimit({ windowMs: 15*60*1000, max: 100, ... });
 export const authedLimiter  = rateLimit({ windowMs: 15*60*1000, max: 500, ... });
-export const paymentLimiter = rateLimit({ windowMs: 60*60*1000, max: 10, ... });
 export const quizLimiter    = rateLimit({ windowMs: 15*60*1000, max: 5, ... });
 ```
 

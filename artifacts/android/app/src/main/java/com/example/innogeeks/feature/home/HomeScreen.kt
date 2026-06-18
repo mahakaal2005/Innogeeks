@@ -22,8 +22,7 @@ import com.example.innogeeks.ui.components.GlassCard
 import com.example.innogeeks.ui.components.GradientBackground
 import com.example.innogeeks.ui.components.Pill
 import com.example.innogeeks.ui.components.PrimaryButton
-import com.example.innogeeks.ui.theme.TextPrimary
-import com.example.innogeeks.ui.theme.TextSecondary
+import androidx.compose.material3.MaterialTheme
 import com.example.innogeeks.ui.theme.domainColor
 
 @Composable
@@ -40,12 +39,11 @@ fun HomeScreen(vm: HomeViewModel) {
                 .verticalScroll(rememberScrollState()),
         ) {
             Spacer(Modifier.height(28.dp))
-            Text("Welcome back,", color = TextSecondary, fontSize = 14.sp)
+            Text("Welcome back,", color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
             Text(
                 session?.name ?: "Member",
-                color = TextPrimary,
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onBackground,
+                style = MaterialTheme.typography.headlineLarge,
             )
             Spacer(Modifier.height(10.dp))
             Row {
@@ -84,8 +82,8 @@ fun HomeScreen(vm: HomeViewModel) {
 @Composable
 private fun FeatureCard(title: String, subtitle: String) {
     GlassCard(Modifier.fillMaxWidth()) {
-        Text(title, color = TextPrimary, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
+        Text(title, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(4.dp))
-        Text(subtitle, color = TextSecondary, fontSize = 13.sp)
+        Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
     }
 }

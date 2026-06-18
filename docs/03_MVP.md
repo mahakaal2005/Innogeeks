@@ -19,7 +19,7 @@ The MVP is the smallest version of the platform that delivers real value to the 
 #### Platform
 - **Android app** (Kotlin + Compose) — primary client for all 4 roles
 - **Supabase backend** (Postgres + Auth + RLS, auto REST API) — single source of truth, shared by app and quiz site
-- **Trusted Express server** — payments, quiz auto-scoring, Round 2 → role assignment, Cloudinary upload signing
+- **Trusted Express server** — quiz auto-scoring, Round 2 → role assignment, Cloudinary upload signing
 - **Quiz website** (React + Vite) — Round 1 test
 
 #### Authentication & Roles
@@ -35,8 +35,7 @@ The MVP is the smallest version of the platform that delivers real value to the 
 
 #### Recruitment
 - Registration form (name, roll no., KIET email `@kiet.edu`, domain choice)
-- **Razorpay UPI QR** payment flow in-app → status: `round1_qualified`
-- Cash payment flow → status: `cash_pending` → manual approval by coordinator/core team
+- **Manual Google Sheets** registration and cash/UPI payment flow → core team manually records as `round1_qualified`
 - Applicant status tracker (which round they're on)
 - **Round 1 quiz** on the quiz website — auto-scored, auto-updates `round1_status`
 - Coordinator/core team: score and mark Round 2 interview
@@ -112,11 +111,11 @@ CORE TEAM (superset of coordinator)
 | Phase | Work | Estimated Time |
 |---|---|---|
 | 1 | Backend: Supabase schema + Auth + RLS policies + triggers + OpenAPI contract | 4 days |
-| 2 | Trusted server: payments (Razorpay) + quiz scoring + Round 2 role assignment + Cloudinary signing | 6 days |
+| 2 | Trusted server: quiz scoring + Round 2 role assignment + Cloudinary signing | 4 days |
 | 3 | Backend: security hardening, indexes, transactions, RLS review | 2 days |
 | 4 | Quiz website (Round 1 test, auto-scoring) | 3 days |
 | 5 | Android: project setup, modules, auth, navigation, theme | 4 days |
-| 6 | Android: public + recruitment + payment screens | 4 days |
+| 6 | Android: public + recruitment status tracker screens | 3 days |
 | 7 | Android: attendance + resources + events screens | 5 days |
 | 8 | Android: admin tools (roles, window toggle) | 2 days |
 | 9 | End-to-end QA + polish across all 3 deployables | 4 days |

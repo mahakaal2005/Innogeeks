@@ -63,17 +63,16 @@
 
 ---
 
-### US-011 — Applicant pays via UPI (Razorpay)
+### US-011 — Applicant pays via UPI/Cash (Manual)
 **As an** applicant,  
-**I want to** pay the ₹50 fee by scanning a Razorpay UPI QR code in the app,  
-**So that** my application moves to Round 1 qualified status automatically.
+**I want to** pay the ₹50 fee by scanning a manual UPI QR code or giving cash,  
+**So that** my application moves to Round 1 qualified status.
 
 **Acceptance Criteria:**
-- Razorpay UPI QR code displayed after registration (backend creates the order with an idempotency key)
-- Applicant pays via any UPI app
-- Razorpay webhook (signature-verified) auto-updates status to `round1_qualified` — no manual review, no screenshot
-- Payment is idempotent (a retry never double-charges or double-approves)
-- Applicant sees updated status on their dashboard
+- Applicant pays via manual UPI or cash collection.
+- Core team records the payment manually in Google Sheets and the database.
+- Status is updated to `round1_qualified`.
+- Applicant sees updated status on their dashboard.
 
 ---
 

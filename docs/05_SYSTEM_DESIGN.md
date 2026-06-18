@@ -24,20 +24,19 @@
 │  Storage policies        │     │  Verifies Supabase JWT        │
 └──────────────────────────┘     └──────┬───────────────┬───────┘
                                          │               │
-                                  ┌──────▼─────┐  ┌──────▼──────┐
-                                  │  Razorpay  │  │ Cloudinary  │
-                                  │  (UPI QR)  │  │ (PDF/banner)│
-                                  └────────────┘  └─────────────┘
+                                                  ┌──────▼──────┐
+                                                  │ Cloudinary  │
+                                                  │ (PDF/banner)│
+                                                  └─────────────┘
 ```
 
 **Supabase is the single source of truth** — managed PostgreSQL, Auth, Row-Level Security (RLS), and an auto-generated REST/Realtime API. The Android app and the quiz website talk **directly to Supabase** via the official SDKs (Supabase Kotlin SDK; `supabase-js`); **RLS enforces all role/domain access at the database layer**, so a malicious client cannot read or write outside its permissions.
 
 A **thin, stateless trusted Express server** handles only operations that require secrets or server-side trust and that RLS alone cannot safely express:
 
-1. **Razorpay** order creation (idempotent) and webhook signature verification → payment status update.
-2. **Quiz auto-scoring** on submit — correct answers never leave the server — plus the atomic `round1_status` update.
-3. **Round 2 clear → role assignment** — application status update + `member` role/domain assignment, in a single atomic transaction.
-4. **Cloudinary signed-upload** signature generation for PDFs and event banners.
+1. **Quiz auto-scoring** on submit — correct answers never leave the server — plus the atomic `round1_status` update.
+2. **Round 2 clear → role assignment** — application status update + `member` role/domain assignment, in a single atomic transaction.
+3. **Cloudinary signed-upload** signature generation for PDFs and event banners.
 
 The trusted server uses the Supabase **service-role key** (bypasses RLS) and **verifies the caller's Supabase JWT** on every protected route. There is no Firebase and no self-managed Postgres.
 
@@ -96,9 +95,6 @@ domain          enum('android','web','ml','iot','arvr') NOT NULL
 academic_year   text NOT NULL
 payment_method  enum('upi','cash')
 payment_status  enum('pending','cash_pending','approved','rejected') NOT NULL DEFAULT 'pending'
-razorpay_order_id    text NULLABLE
-razorpay_payment_id  text NULLABLE  -- set after verified webhook
-idempotency_key      text NULLABLE  -- safe payment retries
 round1_status   enum('pending','cleared','failed') NOT NULL DEFAULT 'pending'
 round2_status   enum('pending','cleared','failed') NOT NULL DEFAULT 'pending'
 round2_score    jsonb NULLABLE  -- rubric scores
@@ -237,8 +233,6 @@ Most reads/writes go **directly from the client to Supabase** and are authorized
 - Events: public reads published; coordinator/core_team create/edit; eligible users register.
 
 ### Trusted Express endpoints (service-role; JWT-verified)
-- `POST /api/payments/razorpay/order` — create order + UPI QR (idempotency key).
-- `POST /api/payments/razorpay/webhook` — verify signature → update payment status (idempotent).
 - `GET  /api/quizzes/:id/take` — return published quiz questions **without** correct answers (validates KIET email against an application).
 - `POST /api/quizzes/:id/submit` — score answers, enforce one-submission-per-email, update `round1_status` atomically.
 - `POST /api/recruitment/applications/:id/round2` — score Round 2; on clear, application status update + role assignment in one transaction.
@@ -274,15 +268,10 @@ language sql stable as $$ select domain::text from public.profiles where id = au
 
 ## 5. Payment Flow
 
-### UPI Path (Razorpay)
+### Manual Registration Path
 ```
-Applicant submits form (direct to Supabase) → status: 'registered'
-  → App calls trusted server: POST /api/payments/razorpay/order (idempotency key)
-  → Razorpay UPI QR shown in the Android app
-  → Applicant pays via any UPI app
-  → Razorpay webhook → trusted server verifies signature
-  → payment_status: 'approved', status: 'round1_qualified' (atomic, idempotent)
-  → On failure/expiry → status stays 'registered' (applicant can retry)
+Applicant data and payment are collected manually via Google Sheets.
+Core team manually registers the applicant in the DB → payment_status: 'approved', status: 'round1_qualified'
 ```
 
 ### Cash Path
@@ -331,10 +320,9 @@ rateLimit(perRoute)   → stricter on /payments, /quizzes/submit, /uploads
 verifySupabaseJwt()   → validate the caller's Supabase JWT; load profile/role/domain
 zodValidate(schema)   → validate body/query/params, reject on failure
 ```
-- **Razorpay webhooks:** `X-Razorpay-Signature` verified before any status change.
 - **Quiz integrity:** correct answers never sent to clients; scoring is server-only.
 - **KIET email:** `@kiet.edu` enforced server-side (regex + domain check) and mirrored in RLS/CHECK where applicable.
-- **Secrets:** Supabase service-role key, Razorpay keys, Cloudinary secret live only on the trusted server; never returned to clients.
+- **Secrets:** Supabase service-role key, Cloudinary secret live only on the trusted server; never returned to clients.
 
 ---
 
@@ -353,7 +341,6 @@ zodValidate(schema)   → validate body/query/params, reject on failure
 | Scenario | Mechanism |
 |---|---|
 | Two coordinators mark the same student in one session | `UNIQUE(session_id, user_id)` + upsert/`ON CONFLICT`; row lock where a read-modify-write is needed |
-| Duplicate payment submit / webhook retry | Idempotency key on order + signature-verified webhook; status change is idempotent |
 | Round 2 clear → status update → role assign | Single DB **transaction** on the trusted server (all-or-nothing) |
 | Double event registration | `UNIQUE(event_id, user_id)` constraint |
 | Duplicate application per cycle | `UNIQUE(user_id, academic_year)` constraint |

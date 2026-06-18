@@ -1,0 +1,34 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+
+    <!-- Outer ring -->
+    <path
+        android:fillColor="#00000000"
+        android:strokeColor="#0F172A"
+        android:strokeWidth="6"
+        android:pathData="M100,10 A90,90 0 1,1 99.999,10 Z"/>
+
+    <!-- Inner geometric hexagon-like shape -->
+    <path
+        android:fillColor="#0F172A"
+        android:pathData="M100,30 L140,55 L140,105 L100,130 L60,105 L60,55 Z"/>
+
+    <!-- "I" letter in cyan -->
+    <path
+        android:fillColor="#17A2B8"
+        android:pathData="M90,50 L110,50 L110,58 L105,58 L105,122 L110,122 L110,130 L90,130 L90,122 L95,122 L95,58 L90,58 Z"/>
+
+    <!-- Top accent bar -->
+    <path
+        android:fillColor="#62D6ED"
+        android:pathData="M82,50 L118,50 L118,57 L82,57 Z"/>
+
+    <!-- Bottom accent bar -->
+    <path
+        android:fillColor="#62D6ED"
+        android:pathData="M82,123 L118,123 L118,130 L82,130 Z"/>
+
+</vector>

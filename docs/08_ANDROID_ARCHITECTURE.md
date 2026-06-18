@@ -58,7 +58,7 @@ Three layers, strict dependency direction (UI → Domain → Data; Domain depend
 :core:ui              — Compose theme, glassmorphism components, design tokens, shared widgets
 :core:common          — Result wrapper, dispatchers, extensions, constants
 :feature:auth         — Login (Supabase Auth), session/token management, AuthViewModel
-:feature:recruitment  — Registration form, Razorpay payment, status tracker
+:feature:recruitment  — Status tracker
 :feature:attendance   — Session list, mark attendance, attendance summary
 :feature:resources    — Domain folder tree, resource viewer, upload
 :feature:events       — Event list, detail, registration
@@ -178,7 +178,7 @@ dependencies {
 - **Multi-step DB writes** use `@Transaction` (DAO) or `withTransaction { }` (database) so partial writes can't corrupt state.
 - **ViewModels** launch work in `viewModelScope`; collection uses `flowOn(Dispatchers.IO)` for IO-bound work.
 - **No shared mutable state** across coroutines — state lives in a single `MutableStateFlow` per ViewModel, updated via `update { }`.
-- **Idempotent network writes** — write operations (attendance mark, payment) include a client-generated request key, so a retry never double-applies.
+- **Idempotent network writes** — write operations (attendance mark) include a client-generated request key, so a retry never double-applies.
 - **Single source of truth** — the UI never holds its own copy of server state; it observes Room. This eliminates the class of bugs where two screens disagree.
 - **Optimistic updates** are written to Room first, then confirmed by the API; on failure they roll back from the next API fetch.
 
@@ -278,5 +278,5 @@ Material 3 with a custom dark theme. Glass effect achieved via translucent `Surf
 
 - **Unit tests** — Use Cases and ViewModels (JUnit + Turbine for Flow + MockK)
 - **Repository tests** — fake API + in-memory Room
-- **UI tests** — Compose test rule for critical screens (login, attendance mark, payment)
+- **UI tests** — Compose test rule for critical screens (login, attendance mark)
 - **DAO tests** — Room in-memory database tests for query correctness and transactions
