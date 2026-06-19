@@ -16,6 +16,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.innogeeks.navigation.GuestHomeRoute
 import com.example.innogeeks.navigation.HomeRoute
+import com.example.innogeeks.navigation.AttendanceRoute
 import com.example.innogeeks.navigation.LoginRoute
 import com.example.innogeeks.navigation.SplashRoute
 import com.example.innogeeks.ui.theme.InnogeeksTheme
@@ -81,6 +82,13 @@ private fun AppRoot() {
 
                 composable<HomeRoute> {
                     HomeScreen(
+                        vm = koinViewModel(),
+                        onNavigateToAttendance = { navController.navigate(AttendanceRoute) }
+                    )
+                }
+                
+                composable<AttendanceRoute> {
+                    com.example.innogeeks.feature.attendance.presentation.CoordinatorAttendanceScreen(
                         vm = koinViewModel()
                     )
                 }

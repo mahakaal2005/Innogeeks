@@ -3,6 +3,7 @@ package com.example.innogeeks.feature.home
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.innogeeks.ui.theme.InnogeeksTheme
 import com.example.innogeeks.core.datastore.Session
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -29,16 +30,17 @@ import androidx.compose.material3.MaterialTheme
 import com.example.innogeeks.ui.theme.domainColor
 
 @Composable
-fun HomeScreen(vm: HomeViewModel) {
+fun HomeScreen(vm: HomeViewModel, onNavigateToAttendance: () -> Unit = {}) {
     val state by vm.state.collectAsStateWithLifecycle()
     HomeScreenContent(
         session = state.session,
-        onSignOut = vm::signOut
+        onSignOut = vm::signOut,
+        onNavigateToAttendance = onNavigateToAttendance
     )
 }
 
 @Composable
-fun HomeScreenContent(session: Session?, onSignOut: () -> Unit) {
+fun HomeScreenContent(session: Session?, onSignOut: () -> Unit, onNavigateToAttendance: () -> Unit = {}) {
     val role = session?.role ?: "public"
     val domain = session?.domain
 
@@ -68,7 +70,7 @@ fun HomeScreenContent(session: Session?, onSignOut: () -> Unit) {
             Spacer(Modifier.height(24.dp))
             FeatureCard("My Application", "Track your recruitment status")
             Spacer(Modifier.height(12.dp))
-            FeatureCard("Attendance", "View your attendance summary")
+            FeatureCard("Attendance", "View your attendance summary", onClick = onNavigateToAttendance)
             Spacer(Modifier.height(12.dp))
             FeatureCard("Resources", "Browse domain learning resources")
             Spacer(Modifier.height(12.dp))
@@ -131,8 +133,8 @@ private fun HomeScreenCoreTeamPreview() {
 }
 
 @Composable
-private fun FeatureCard(title: String, subtitle: String) {
-    GlassCard(Modifier.fillMaxWidth()) {
+private fun FeatureCard(title: String, subtitle: String, onClick: () -> Unit = {}) {
+    GlassCard(Modifier.fillMaxWidth().clickable { onClick() }) {
         Text(title, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(4.dp))
         Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodySmall)
