@@ -51,9 +51,9 @@ class CoordinatorAttendanceViewModel(
 
     private fun loadSessions(domain: String) {
         viewModelScope.launch {
-            _state.update { it.copy(isLoading = true) }
+            _state.update { it.copy(isLoading = true, error = null) }
             when (val res = repo.getSessions(domain)) {
-                is Result.Success -> _state.update { it.copy(isLoading = false, sessions = res.data.toPersistentList()) }
+                is Result.Success -> _state.update { it.copy(isLoading = false, error = null, sessions = res.data.toPersistentList()) }
                 is Result.Error -> {
                     _state.update { it.copy(isLoading = false, error = res.error.toUiText()) }
                     _events.send(AttendanceEvent.Error(res.error.toUiText()))
