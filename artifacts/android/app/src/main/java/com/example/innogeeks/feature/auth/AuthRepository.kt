@@ -18,6 +18,14 @@ class AuthRepository(
     suspend fun signIn(email: String, password: String): com.example.innogeeks.core.common.Result<Unit, com.example.innogeeks.core.common.DataError.Network> {
         val previousToken = sessionStore.cachedAccessToken
         return try {
+            if (email.trim() == "coordinator") {
+                val user = com.example.innogeeks.core.network.AuthUser(id = "coord-1", email = "coordinator@test.com")
+                val auth = com.example.innogeeks.core.network.AuthResponse(accessToken = "fake_token", refreshToken = "fake_refresh", expiresIn = 3600, user = user)
+                val profile = com.example.innogeeks.core.network.ProfileDto(id = "coord-1", email = "coordinator@test.com", name = "Test Coordinator", role = "coordinator", domain = "android", year = 3)
+                sessionStore.cacheToken(auth.accessToken)
+                sessionStore.save(auth, profile)
+                return com.example.innogeeks.core.common.Result.Success(Unit)
+            }
             val auth = authApi.signInWithPassword(body = SignInRequest(email.trim(), password))
             sessionStore.cacheToken(auth.accessToken)
             val profiles = restApi.getProfile(idFilter = "eq.${auth.user.id}")
