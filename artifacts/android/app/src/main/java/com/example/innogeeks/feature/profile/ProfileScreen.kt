@@ -246,7 +246,7 @@ private fun ProfilePreview() {
                 name = "Atul Kumar",
                 role = "coordinator",
                 domain = "Android",
-                year = 3
+                year = 2
             ),
             onSignOut = {}
         )
