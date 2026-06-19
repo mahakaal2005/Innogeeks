@@ -1,6 +1,5 @@
 package com.example.innogeeks.feature.auth
 
-import com.example.innogeeks.core.common.Resource
 import com.example.innogeeks.core.datastore.Session
 import com.example.innogeeks.core.datastore.SessionStore
 import com.example.innogeeks.core.network.SignInRequest
@@ -16,33 +15,34 @@ class AuthRepository(
 ) {
     val sessionFlow: Flow<Session?> = sessionStore.sessionFlow
 
-    suspend fun signIn(email: String, password: String): Resource<Unit> {
+    suspend fun signIn(email: String, password: String): com.example.innogeeks.core.common.Result<Unit, com.example.innogeeks.core.common.DataError.Network> {
         val previousToken = sessionStore.cachedAccessToken
         return try {
             val auth = authApi.signInWithPassword(body = SignInRequest(email.trim(), password))
-            // The session isn't persisted until save() below, so cache the freshly
-            // issued token now — otherwise the profile lookup goes out as anon and
-            // RLS returns no rows, surfacing a misleading "No profile found" error.
             sessionStore.cacheToken(auth.accessToken)
             val profiles = restApi.getProfile(idFilter = "eq.${auth.user.id}")
             val profile = profiles.firstOrNull()
             if (profile == null) {
                 sessionStore.cacheToken(previousToken)
-                return Resource.Error("No profile found for this account.")
+                return com.example.innogeeks.core.common.Result.Error(com.example.innogeeks.core.common.DataError.Network.NOT_FOUND)
             }
             sessionStore.save(auth, profile)
-            Resource.Success(Unit)
+            com.example.innogeeks.core.common.Result.Success(Unit)
         } catch (e: HttpException) {
             sessionStore.cacheToken(previousToken)
-            Resource.Error(
+            com.example.innogeeks.core.common.Result.Error(
                 when (e.code()) {
-                    400, 401 -> "Invalid email or password."
-                    else -> "Sign-in failed (${e.code()})."
+                    400, 401 -> com.example.innogeeks.core.common.DataError.Network.UNAUTHORIZED
+                    404 -> com.example.innogeeks.core.common.DataError.Network.NOT_FOUND
+                    else -> com.example.innogeeks.core.common.DataError.Network.SERVER_ERROR
                 }
             )
+        } catch (e: java.net.UnknownHostException) {
+            sessionStore.cacheToken(previousToken)
+            com.example.innogeeks.core.common.Result.Error(com.example.innogeeks.core.common.DataError.Network.NO_INTERNET)
         } catch (e: Exception) {
             sessionStore.cacheToken(previousToken)
-            Resource.Error(e.message ?: "Network error. Please check your connection.")
+            com.example.innogeeks.core.common.Result.Error(com.example.innogeeks.core.common.DataError.Network.UNKNOWN)
         }
     }
 

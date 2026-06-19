@@ -2,7 +2,9 @@ package com.example.innogeeks.feature.auth
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.innogeeks.core.common.Resource
+import com.example.innogeeks.core.common.Result
+import com.example.innogeeks.core.common.UiText
+import com.example.innogeeks.core.common.toUiText
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -21,7 +23,7 @@ data class LoginUiState(
     val email: String = "",
     val password: String = "",
     val loading: Boolean = false,
-    val error: String? = null,
+    val error: UiText? = null,
 )
 
 class AuthViewModel(private val repo: AuthRepository) : ViewModel() {
@@ -39,14 +41,14 @@ class AuthViewModel(private val repo: AuthRepository) : ViewModel() {
         val current = _state.value
         if (current.loading) return
         if (current.email.isBlank() || current.password.isBlank()) {
-            _state.update { it.copy(error = "Enter your email and password.") }
+            _state.update { it.copy(error = UiText.DynamicString("Enter your email and password.")) }
             return
         }
         _state.update { it.copy(loading = true, error = null) }
         viewModelScope.launch {
             when (val result = repo.signIn(current.email, current.password)) {
-                is Resource.Error -> _state.update { it.copy(loading = false, error = result.message) }
-                else -> {
+                is Result.Error -> _state.update { it.copy(loading = false, error = result.error.toUiText()) }
+                is Result.Success -> {
                     _state.update { it.copy(loading = false) }
                     _events.send(AuthEvent.NavigateToHome)
                 }

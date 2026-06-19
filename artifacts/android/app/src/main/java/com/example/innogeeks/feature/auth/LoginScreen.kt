@@ -113,7 +113,7 @@ fun LoginScreen(
                 if (state.error != null) {
                     Spacer(Modifier.height(12.dp))
                     Text(
-                        state.error!!,
+                        state.error.asString(),
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -162,7 +162,7 @@ private fun LoginScreenLoadingPreview() {
 private fun LoginScreenErrorPreview() {
     InnogeeksTheme(darkTheme = true) {
         LoginScreen(
-            state = LoginUiState(email = "test@example.com", password = "password", error = "Invalid email or password."),
+            state = LoginUiState(email = "test@example.com", password = "password", error = com.example.innogeeks.core.common.UiText.DynamicString("Invalid email or password.")),
             onEmailChange = {},
             onPasswordChange = {},
             onSignIn = {},
