@@ -28,22 +28,10 @@ import com.example.innogeeks.ui.components.GradientBackground
 import com.example.innogeeks.ui.components.PrimaryButton
 
 @Composable
-fun LoginRoot(
-    onNavigateToHome: () -> Unit,
-    onBack: () -> Unit,
-    vm: AuthViewModel = org.koin.androidx.compose.koinViewModel()
-) {
+fun LoginScreen(vm: AuthViewModel, onBack: () -> Unit = {}) {
     val state by vm.state.collectAsStateWithLifecycle()
 
-    androidx.compose.runtime.LaunchedEffect(Unit) {
-        vm.events.collect { event ->
-            when (event) {
-                is AuthEvent.NavigateToHome -> onNavigateToHome()
-            }
-        }
-    }
-
-    LoginScreen(
+    LoginScreenContent(
         state = state,
         onEmailChange = vm::onEmailChange,
         onPasswordChange = vm::onPasswordChange,
@@ -53,7 +41,7 @@ fun LoginRoot(
 }
 
 @Composable
-fun LoginScreen(
+fun LoginScreenContent(
     state: LoginUiState,
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
@@ -113,7 +101,7 @@ fun LoginScreen(
                 if (state.error != null) {
                     Spacer(Modifier.height(12.dp))
                     Text(
-                        state.error.asString(),
+                        state.error!!.asString(),
                         color = MaterialTheme.colorScheme.error,
                         style = MaterialTheme.typography.bodySmall
                     )
@@ -133,7 +121,7 @@ fun LoginScreen(
 @Composable
 private fun LoginScreenIdlePreview() {
     InnogeeksTheme(darkTheme = true) {
-        LoginScreen(
+        LoginScreenContent(
             state = LoginUiState(email = "test@example.com", password = "password"),
             onEmailChange = {},
             onPasswordChange = {},
@@ -147,7 +135,7 @@ private fun LoginScreenIdlePreview() {
 @Composable
 private fun LoginScreenLoadingPreview() {
     InnogeeksTheme(darkTheme = true) {
-        LoginScreen(
+        LoginScreenContent(
             state = LoginUiState(email = "test@example.com", password = "password", loading = true),
             onEmailChange = {},
             onPasswordChange = {},
@@ -161,7 +149,7 @@ private fun LoginScreenLoadingPreview() {
 @Composable
 private fun LoginScreenErrorPreview() {
     InnogeeksTheme(darkTheme = true) {
-        LoginScreen(
+        LoginScreenContent(
             state = LoginUiState(email = "test@example.com", password = "password", error = com.example.innogeeks.core.common.UiText.DynamicString("Invalid email or password.")),
             onEmailChange = {},
             onPasswordChange = {},

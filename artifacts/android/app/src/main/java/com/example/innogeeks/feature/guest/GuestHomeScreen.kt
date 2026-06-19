@@ -58,6 +58,9 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.haze
+import dev.chrisbanes.haze.hazeChild
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
@@ -71,21 +74,26 @@ import com.example.innogeeks.ui.theme.ElectricCyan
 import com.example.innogeeks.ui.theme.GlassBorder
 
 // Exact background from preview
-private val BgColor = Color(0xFF080B14)
-private val CardBg = Color(0xFF0F1420)
-private val CyanAccent = Color(0xFF00C8FF)
-private val NavBg = Color(0xFF0D1117)
+// Replaced with MaterialTheme tokens!
 
 @Composable
 fun GuestHomeScreen(onLoginTapped: () -> Unit) {
     var selectedTab by remember { mutableIntStateOf(0) }
+    val hazeState = remember { HazeState() }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(BgColor)
+            .background(MaterialTheme.colorScheme.background)
     ) {
-        Column(modifier = Modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .haze(
+                    state = hazeState,
+                    backgroundColor = MaterialTheme.colorScheme.background
+                )
+        ) {
 
             // ── Top Bar ───────────────────────────────────────────────────
             GuestTopBar(onProfileClick = onLoginTapped)
@@ -99,11 +107,14 @@ fun GuestHomeScreen(onLoginTapped: () -> Unit) {
                     3 -> GuestProfileTab(onLoginTapped)
                 }
             }
+        }
 
-            // ── Bottom Nav (unchanged) ─────────────────────────────────────
+        // ── Bottom Nav (unchanged) ─────────────────────────────────────
+        Box(modifier = Modifier.align(Alignment.BottomCenter)) {
             GuestBottomNav(
                 selected = selectedTab,
                 onSelect = { selectedTab = it },
+                hazeState = hazeState
             )
         }
     }
@@ -125,10 +136,10 @@ private fun GuestTopBar(onProfileClick: () -> Unit) {
         // INNO (white) + GEEKS (cyan)
         Text(
             buildAnnotatedString {
-                withStyle(SpanStyle(color = Color.White, fontWeight = FontWeight.Bold)) {
+                withStyle(SpanStyle(color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold)) {
                     append("INNO")
                 }
-                withStyle(SpanStyle(color = CyanAccent, fontWeight = FontWeight.Bold)) {
+                withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)) {
                     append("GEEKS")
                 }
             },
@@ -140,16 +151,23 @@ private fun GuestTopBar(onProfileClick: () -> Unit) {
                 Icon(
                     Icons.Rounded.Notifications,
                     contentDescription = "Notifications",
-                    tint = Color.White.copy(alpha = 0.6f),
+                    tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                     modifier = Modifier.size(22.dp)
                 )
+            }
+            Spacer(Modifier.width(4.dp))
+            
+            val toggleTheme = com.example.innogeeks.ui.theme.LocalToggleTheme.current
+            val isDark = com.example.innogeeks.ui.theme.LocalDarkTheme.current
+            IconButton(onClick = { toggleTheme() }) {
+                androidx.compose.material3.Text("🌓")
             }
             Spacer(Modifier.width(4.dp))
             IconButton(onClick = onProfileClick) {
                 Icon(
                     Icons.Rounded.AccountCircle,
                     contentDescription = "Profile",
-                    tint = Color.White.copy(alpha = 0.6f),
+                    tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f),
                     modifier = Modifier.size(22.dp)
                 )
             }
@@ -172,16 +190,17 @@ private val navItems = listOf(
 private fun GuestBottomNav(
     selected: Int,
     onSelect: (Int) -> Unit,
+    hazeState: HazeState
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .windowInsetsPadding(WindowInsets.navigationBars)
-            .padding(horizontal = 16.dp, vertical = 8.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .background(NavBg.copy(alpha = 0.97f))
-            .border(1.dp, GlassBorder, RoundedCornerShape(20.dp))
-            .padding(vertical = 10.dp),
+            .padding(horizontal = 24.dp, vertical = 24.dp)
+            .hazeChild(state = hazeState, shape = CircleShape)
+            .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f), CircleShape)
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f), CircleShape)
+            .padding(vertical = 12.dp),
         horizontalArrangement = Arrangement.SpaceAround,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -202,14 +221,14 @@ private fun GuestBottomNav(
                 Icon(
                     item.icon,
                     contentDescription = item.label,
-                    tint = if (isSelected) CyanAccent else Color.White.copy(alpha = iconAlpha),
+                    tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = iconAlpha),
                     modifier = Modifier.size(22.dp)
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
                     item.label,
                     style = MaterialTheme.typography.labelSmall.copy(
-                        color = if (isSelected) CyanAccent else Color.White.copy(alpha = iconAlpha),
+                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = iconAlpha),
                         fontSize = 10.sp,
                     )
                 )
@@ -235,7 +254,7 @@ private fun GuestHomeFeed(onJoinTapped: () -> Unit) {
         Text(
             text = "Build the",
             style = MaterialTheme.typography.headlineLarge.copy(
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onBackground,
                 fontSize = 40.sp,
                 fontWeight = FontWeight.Bold,
                 lineHeight = 48.sp,
@@ -244,7 +263,7 @@ private fun GuestHomeFeed(onJoinTapped: () -> Unit) {
         Text(
             text = "Future.",
             style = MaterialTheme.typography.headlineLarge.copy(
-                color = CyanAccent,
+                color = MaterialTheme.colorScheme.primary,
                 fontSize = 40.sp,
                 fontWeight = FontWeight.Bold,
                 lineHeight = 48.sp,
@@ -254,7 +273,7 @@ private fun GuestHomeFeed(onJoinTapped: () -> Unit) {
         Text(
             text = "Official Technical Club of KIET.",
             style = MaterialTheme.typography.bodyMedium.copy(
-                color = Color.White.copy(alpha = 0.5f)
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
             )
         )
 
@@ -275,14 +294,14 @@ private fun GuestHomeFeed(onJoinTapped: () -> Unit) {
                 Icon(
                     Icons.Rounded.CheckCircle,
                     contentDescription = null,
-                    tint = CyanAccent,
+                    tint = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.size(18.dp)
                 )
                 Spacer(Modifier.width(10.dp))
                 Text(
                     text = item,
                     style = MaterialTheme.typography.bodyMedium.copy(
-                        color = Color.White,
+                        color = MaterialTheme.colorScheme.onBackground,
                         fontWeight = FontWeight.Medium,
                     )
                 )
@@ -296,7 +315,7 @@ private fun GuestHomeFeed(onJoinTapped: () -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(50.dp))
-                .background(CyanAccent)
+                .background(MaterialTheme.colorScheme.primary)
                 .clickable { onJoinTapped() }
                 .padding(vertical = 16.dp),
             contentAlignment = Alignment.Center,
@@ -304,7 +323,7 @@ private fun GuestHomeFeed(onJoinTapped: () -> Unit) {
             Text(
                 "Join Innogeeks",
                 style = MaterialTheme.typography.labelLarge.copy(
-                    color = Color(0xFF080B14),
+                    color = MaterialTheme.colorScheme.onPrimary,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,
                 )
@@ -339,7 +358,7 @@ private fun GuestHomeFeed(onJoinTapped: () -> Unit) {
         Spacer(Modifier.height(14.dp))
         AchievementsSection()
 
-        Spacer(Modifier.height(32.dp))
+        Spacer(Modifier.height(200.dp))
     }
 }
 
@@ -348,7 +367,7 @@ private fun SectionTitle(text: String) {
     Text(
         text = text,
         style = MaterialTheme.typography.headlineSmall.copy(
-            color = Color.White,
+            color = MaterialTheme.colorScheme.onBackground,
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
         )
@@ -358,7 +377,7 @@ private fun SectionTitle(text: String) {
 @Composable
 private fun StatsGrid() {
     val stats = listOf(
-        Triple("100+", "Members", CyanAccent),
+        Triple("100+", "Members", MaterialTheme.colorScheme.primary),
         Triple("20+", "Projects", AccentPurple),
         Triple("10+", "Events", AccentBlue),
         Triple("4", "Domains", AccentPink),
@@ -371,7 +390,7 @@ private fun StatsGrid() {
                         modifier = Modifier
                             .weight(1f)
                             .clip(RoundedCornerShape(16.dp))
-                            .background(CardBg)
+                            .background(MaterialTheme.colorScheme.surface)
                             .padding(vertical = 20.dp),
                         contentAlignment = Alignment.Center
                     ) {
@@ -388,7 +407,7 @@ private fun StatsGrid() {
                             Text(
                                 text = label,
                                 style = MaterialTheme.typography.bodySmall.copy(
-                                    color = Color.White.copy(alpha = 0.5f)
+                                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
                                 )
                             )
                         }
@@ -408,7 +427,7 @@ private fun WhyJoinList() {
         Triple(Icons.Rounded.School, "Mentorship", "Learn directly from seniors"),
         Triple(Icons.Rounded.Work, "Career Growth", "Improve placements and internships"),
     )
-    val colors = listOf(CyanAccent, AccentOrange, AccentPurple, AccentBlue)
+    val colors = listOf(com.example.innogeeks.ui.theme.ElectricCyan, AccentOrange, AccentPurple, AccentBlue)
 
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         items.forEachIndexed { i, (icon, title, desc) ->
@@ -416,7 +435,7 @@ private fun WhyJoinList() {
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(14.dp))
-                    .background(CardBg)
+                    .background(MaterialTheme.colorScheme.surface)
                     .padding(horizontal = 16.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -433,7 +452,7 @@ private fun WhyJoinList() {
                     Text(
                         title,
                         style = MaterialTheme.typography.bodyMedium.copy(
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.onBackground,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 14.sp,
                         )
@@ -442,7 +461,7 @@ private fun WhyJoinList() {
                     Text(
                         desc,
                         style = MaterialTheme.typography.bodySmall.copy(
-                            color = Color.White.copy(alpha = 0.45f)
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.45f)
                         )
                     )
                 }
@@ -454,7 +473,7 @@ private fun WhyJoinList() {
 @Composable
 private fun DomainsHorizontal() {
     val domains = listOf(
-        listOf("Android", "Kotlin · Compose · Firebase", CyanAccent, "📱"),
+        listOf("Android", "Kotlin · Compose · Firebase", MaterialTheme.colorScheme.primary, "📱"),
         listOf("Web Dev", "React · Next.js · Node.js", AccentBlue, "🌐"),
         listOf("AI / ML", "Python · LLMs · Vision", AccentPurple, "🤖"),
         listOf("IoT", "ESP32 · Arduino · Embedded", AccentOrange, "🔌"),
@@ -473,7 +492,7 @@ private fun DomainsHorizontal() {
                 modifier = Modifier
                     .width(160.dp)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(CardBg)
+                    .background(MaterialTheme.colorScheme.surface)
                     .padding(16.dp)
             ) {
                 Column {
@@ -482,7 +501,7 @@ private fun DomainsHorizontal() {
                     Text(
                         name as String,
                         style = MaterialTheme.typography.bodyMedium.copy(
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.onBackground,
                             fontWeight = FontWeight.Bold,
                             fontSize = 14.sp,
                         )
@@ -491,7 +510,7 @@ private fun DomainsHorizontal() {
                     Text(
                         stack as String,
                         style = MaterialTheme.typography.labelSmall.copy(
-                            color = Color.White.copy(alpha = 0.45f),
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.45f),
                             fontSize = 10.sp,
                         )
                     )
@@ -522,7 +541,7 @@ private fun AchievementsSection() {
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(14.dp))
-                    .background(CardBg)
+                    .background(MaterialTheme.colorScheme.surface)
                     .padding(horizontal = 16.dp, vertical = 14.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -532,7 +551,7 @@ private fun AchievementsSection() {
                     Text(
                         title,
                         style = MaterialTheme.typography.bodyMedium.copy(
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.onBackground,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 13.sp,
                         )
@@ -540,7 +559,7 @@ private fun AchievementsSection() {
                     Text(
                         sub,
                         style = MaterialTheme.typography.bodySmall.copy(
-                            color = Color.White.copy(alpha = 0.45f)
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.45f)
                         )
                     )
                 }
@@ -555,7 +574,7 @@ private fun AchievementsSection() {
 @Composable
 private fun GuestDomainsTab() {
     val domains = listOf(
-        listOf("Android", "Kotlin · Compose · Firebase", CyanAccent, "📱"),
+        listOf("Android", "Kotlin · Compose · Firebase", MaterialTheme.colorScheme.primary, "📱"),
         listOf("Web Dev", "React · Next.js · Node.js", AccentBlue, "🌐"),
         listOf("AI / ML", "Python · LLMs · Computer Vision", AccentPurple, "🤖"),
         listOf("IoT", "ESP32 · Arduino · Embedded", AccentOrange, "🔌"),
@@ -572,7 +591,7 @@ private fun GuestDomainsTab() {
         Spacer(Modifier.height(4.dp))
         Text(
             "Pick a domain and start your journey",
-            style = MaterialTheme.typography.bodySmall.copy(color = Color.White.copy(alpha = 0.45f))
+            style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.45f))
         )
         Spacer(Modifier.height(20.dp))
         domains.forEach { (name, stack, color, emoji) ->
@@ -582,7 +601,7 @@ private fun GuestDomainsTab() {
                 modifier = Modifier
                     .fillMaxWidth()
                     .clip(RoundedCornerShape(16.dp))
-                    .background(CardBg)
+                    .background(MaterialTheme.colorScheme.surface)
                     .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -599,7 +618,7 @@ private fun GuestDomainsTab() {
                     Text(
                         name as String,
                         style = MaterialTheme.typography.bodyMedium.copy(
-                            color = Color.White,
+                            color = MaterialTheme.colorScheme.onBackground,
                             fontWeight = FontWeight.Bold,
                             fontSize = 15.sp,
                         )
@@ -621,7 +640,7 @@ private fun GuestDomainsTab() {
             }
             Spacer(Modifier.height(10.dp))
         }
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(200.dp))
     }
 }
 
@@ -641,7 +660,7 @@ private fun GuestEventsTab() {
         Spacer(Modifier.height(4.dp))
         Text(
             "Stay updated with what's happening",
-            style = MaterialTheme.typography.bodySmall.copy(color = Color.White.copy(alpha = 0.45f))
+            style = MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.45f))
         )
         Spacer(Modifier.height(40.dp))
         Text("📅", fontSize = 48.sp)
@@ -649,7 +668,7 @@ private fun GuestEventsTab() {
         Text(
             "Events coming soon",
             style = MaterialTheme.typography.bodyMedium.copy(
-                color = Color.White,
+                color = MaterialTheme.colorScheme.onBackground,
                 fontWeight = FontWeight.SemiBold,
                 textAlign = TextAlign.Center,
             )
@@ -658,10 +677,11 @@ private fun GuestEventsTab() {
         Text(
             "Follow us @innogeeks_kiet\nto stay updated",
             style = MaterialTheme.typography.bodySmall.copy(
-                color = Color.White.copy(alpha = 0.4f),
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
                 textAlign = TextAlign.Center,
             )
         )
+        Spacer(Modifier.height(200.dp))
     }
 }
 
@@ -682,7 +702,7 @@ private fun GuestProfileTab(onLoginTapped: () -> Unit) {
         Text(
             "Sign in to access your member dashboard",
             style = MaterialTheme.typography.bodySmall.copy(
-                color = Color.White.copy(alpha = 0.45f)
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.45f)
             )
         )
 
@@ -693,7 +713,7 @@ private fun GuestProfileTab(onLoginTapped: () -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(20.dp))
-                .background(CardBg)
+                .background(MaterialTheme.colorScheme.surface)
                 .padding(24.dp),
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
@@ -704,17 +724,17 @@ private fun GuestProfileTab(onLoginTapped: () -> Unit) {
                             .size(72.dp)
                             .background(
                                 Brush.radialGradient(
-                                    listOf(CyanAccent.copy(alpha = 0.15f), Color.Transparent)
+                                    listOf(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f), Color.Transparent)
                                 ),
                                 CircleShape
                             )
-                            .border(2.dp, CyanAccent.copy(alpha = 0.25f), CircleShape),
+                            .border(2.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.25f), CircleShape),
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
                             Icons.Rounded.AccountCircle,
                             contentDescription = null,
-                            tint = Color.White.copy(alpha = 0.2f),
+                            tint = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f),
                             modifier = Modifier.size(72.dp)
                         )
                     }
@@ -723,7 +743,7 @@ private fun GuestProfileTab(onLoginTapped: () -> Unit) {
                         modifier = Modifier
                             .align(Alignment.BottomEnd)
                             .size(22.dp)
-                            .background(CyanAccent, CircleShape),
+                            .background(MaterialTheme.colorScheme.primary, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Text("🔒", fontSize = 10.sp)
@@ -734,7 +754,7 @@ private fun GuestProfileTab(onLoginTapped: () -> Unit) {
                 Text(
                     text = "Member Name",
                     style = MaterialTheme.typography.headlineSmall.copy(
-                        color = Color.White.copy(alpha = 0.2f),
+                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                     )
@@ -743,13 +763,13 @@ private fun GuestProfileTab(onLoginTapped: () -> Unit) {
                 // Domain pill placeholder
                 Box(
                     modifier = Modifier
-                        .background(CyanAccent.copy(alpha = 0.1f), RoundedCornerShape(50))
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), RoundedCornerShape(50))
                         .padding(horizontal = 14.dp, vertical = 4.dp)
                 ) {
                     Text(
                         "Domain · Year",
                         style = MaterialTheme.typography.labelSmall.copy(
-                            color = Color.White.copy(alpha = 0.2f)
+                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.2f)
                         )
                     )
                 }
@@ -761,7 +781,7 @@ private fun GuestProfileTab(onLoginTapped: () -> Unit) {
         // ── Locked stats row ──────────────────────────────────────────
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             val lockedStats = listOf(
-                Triple("--", "Attendance", CyanAccent),
+                Triple("--", "Attendance", MaterialTheme.colorScheme.primary),
                 Triple("--", "Events", AccentPurple),
                 Triple("--", "Tasks", AccentBlue),
             )
@@ -770,7 +790,7 @@ private fun GuestProfileTab(onLoginTapped: () -> Unit) {
                     modifier = Modifier
                         .weight(1f)
                         .clip(RoundedCornerShape(14.dp))
-                        .background(CardBg)
+                        .background(MaterialTheme.colorScheme.surface)
                         .padding(vertical = 16.dp),
                     contentAlignment = Alignment.Center
                 ) {
@@ -787,7 +807,7 @@ private fun GuestProfileTab(onLoginTapped: () -> Unit) {
                         Text(
                             label,
                             style = MaterialTheme.typography.labelSmall.copy(
-                                color = Color.White.copy(alpha = 0.3f)
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.3f)
                             )
                         )
                     }
@@ -808,7 +828,7 @@ private fun GuestProfileTab(onLoginTapped: () -> Unit) {
             Triple(Icons.Rounded.EmojiEvents, "Hackathon Teams", "Find teammates, form squads"),
             Triple(Icons.Rounded.People, "Community Access", "Connect with 100+ Innogeeks"),
         )
-        val perkColors = listOf(CyanAccent, AccentPurple, AccentBlue, AccentOrange, AccentPink)
+        val perkColors = listOf(MaterialTheme.colorScheme.primary, AccentPurple, AccentBlue, AccentOrange, AccentPink)
 
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             perks.forEachIndexed { i, (icon, title, desc) ->
@@ -816,7 +836,7 @@ private fun GuestProfileTab(onLoginTapped: () -> Unit) {
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(14.dp))
-                        .background(CardBg)
+                        .background(MaterialTheme.colorScheme.surface)
                         .padding(horizontal = 16.dp, vertical = 13.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -833,7 +853,7 @@ private fun GuestProfileTab(onLoginTapped: () -> Unit) {
                         Text(
                             title,
                             style = MaterialTheme.typography.bodyMedium.copy(
-                                color = Color.White,
+                                color = MaterialTheme.colorScheme.onBackground,
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 13.sp,
                             )
@@ -841,7 +861,7 @@ private fun GuestProfileTab(onLoginTapped: () -> Unit) {
                         Text(
                             desc,
                             style = MaterialTheme.typography.bodySmall.copy(
-                                color = Color.White.copy(alpha = 0.4f),
+                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.4f),
                                 fontSize = 11.sp,
                             )
                         )
@@ -857,7 +877,7 @@ private fun GuestProfileTab(onLoginTapped: () -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(50.dp))
-                .background(CyanAccent)
+                .background(MaterialTheme.colorScheme.primary)
                 .clickable { onLoginTapped() }
                 .padding(vertical = 16.dp),
             contentAlignment = Alignment.Center,
@@ -878,19 +898,19 @@ private fun GuestProfileTab(onLoginTapped: () -> Unit) {
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(50.dp))
-                .background(CardBg)
+                .background(MaterialTheme.colorScheme.surface)
                 .padding(vertical = 16.dp),
             contentAlignment = Alignment.Center,
         ) {
             Text(
                 "Learn How to Join",
                 style = MaterialTheme.typography.labelLarge.copy(
-                    color = Color.White.copy(alpha = 0.5f)
+                    color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f)
                 )
             )
         }
 
-        Spacer(Modifier.height(32.dp))
+        Spacer(Modifier.height(200.dp))
     }
 }
 
@@ -906,7 +926,7 @@ private fun GuestHomeScreenPreview() {
 @Composable
 private fun GuestDomainsTabPreview() {
     InnogeeksTheme(darkTheme = true) {
-        Box(modifier = Modifier.background(BgColor)) {
+        Box(modifier = Modifier.background(MaterialTheme.colorScheme.background)) {
             GuestDomainsTab()
         }
     }
@@ -916,7 +936,7 @@ private fun GuestDomainsTabPreview() {
 @Composable
 private fun GuestEventsTabPreview() {
     InnogeeksTheme(darkTheme = true) {
-        Box(modifier = Modifier.background(BgColor)) {
+        Box(modifier = Modifier.background(MaterialTheme.colorScheme.background)) {
             GuestEventsTab()
         }
     }
@@ -926,7 +946,7 @@ private fun GuestEventsTabPreview() {
 @Composable
 private fun GuestProfileTabPreview() {
     InnogeeksTheme(darkTheme = true) {
-        Box(modifier = Modifier.background(BgColor)) {
+        Box(modifier = Modifier.background(MaterialTheme.colorScheme.background)) {
             GuestProfileTab(onLoginTapped = {})
         }
     }

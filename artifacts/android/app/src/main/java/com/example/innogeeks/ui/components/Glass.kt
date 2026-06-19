@@ -82,6 +82,7 @@ fun GlassTextField(
     modifier: Modifier = Modifier,
     isPassword: Boolean = false,
 ) {
+
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
@@ -111,57 +112,5 @@ fun Pill(text: String, color: Color, modifier: Modifier = Modifier) {
             .padding(horizontal = 12.dp, vertical = 4.dp),
     ) {
         Text(text, color = color, style = MaterialTheme.typography.labelSmall)
-    }
-}
-
-@androidx.compose.ui.tooling.preview.Preview(showBackground = true)
-@Composable
-private fun GradientBackgroundPreview() {
-    com.example.innogeeks.ui.theme.InnogeeksTheme {
-        GradientBackground {
-            Text("Content here", color = Color.White, modifier = Modifier.padding(16.dp))
-        }
-    }
-}
-
-@androidx.compose.ui.tooling.preview.Preview(showBackground = true)
-@Composable
-private fun GlassCardPreview() {
-    com.example.innogeeks.ui.theme.InnogeeksTheme {
-        Box(modifier = Modifier.padding(16.dp)) {
-            GlassCard {
-                Text("Card Content", color = Color.White)
-            }
-        }
-    }
-}
-
-@androidx.compose.ui.tooling.preview.Preview(showBackground = true)
-@Composable
-private fun PrimaryButtonPreview() {
-    com.example.innogeeks.ui.theme.InnogeeksTheme {
-        Box(modifier = Modifier.padding(16.dp)) {
-            PrimaryButton(text = "Primary Action", onClick = {})
-        }
-    }
-}
-
-@androidx.compose.ui.tooling.preview.Preview(showBackground = true)
-@Composable
-private fun GlassTextFieldPreview() {
-    com.example.innogeeks.ui.theme.InnogeeksTheme {
-        Box(modifier = Modifier.padding(16.dp)) {
-            GlassTextField(value = "Input text", onValueChange = {}, label = "Label")
-        }
-    }
-}
-
-@androidx.compose.ui.tooling.preview.Preview(showBackground = true)
-@Composable
-private fun PillPreview() {
-    com.example.innogeeks.ui.theme.InnogeeksTheme {
-        Box(modifier = Modifier.padding(16.dp)) {
-            Pill(text = "Active", color = com.example.innogeeks.ui.theme.ElectricCyan)
-        }
     }
 }
