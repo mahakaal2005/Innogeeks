@@ -29,16 +29,30 @@ import androidx.compose.material3.MaterialTheme
 import com.example.innogeeks.ui.theme.domainColor
 
 @Composable
-fun HomeScreen(vm: HomeViewModel) {
-    val session by vm.session.collectAsStateWithLifecycle()
-    HomeScreenContent(
-        session = session,
+fun HomeRoot(
+    onNavigateToGuestHome: () -> Unit,
+    vm: HomeViewModel = org.koin.androidx.compose.koinViewModel()
+) {
+    val state by vm.state.collectAsStateWithLifecycle()
+
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        vm.events.collect { event ->
+            when (event) {
+                is HomeEvent.NavigateToGuestHome -> onNavigateToGuestHome()
+            }
+        }
+    }
+
+    HomeScreen(
+        state = state,
         onSignOut = vm::signOut
     )
 }
 
 @Composable
-fun HomeScreenContent(session: Session?, onSignOut: () -> Unit) {
+fun HomeScreen(state: HomeState, onSignOut: () -> Unit) {
+    val session = state.session
+
     val role = session?.role ?: "public"
     val domain = session?.domain
 
@@ -94,8 +108,8 @@ fun HomeScreenContent(session: Session?, onSignOut: () -> Unit) {
 @Composable
 private fun HomeScreenMemberPreview() {
     InnogeeksTheme(darkTheme = true) {
-        HomeScreenContent(
-            session = Session(
+        HomeScreen(
+            state = HomeState(session = Session(
                 accessToken = "token",
                 refreshToken = "refresh",
                 userId = "1",
@@ -104,7 +118,7 @@ private fun HomeScreenMemberPreview() {
                 role = "member",
                 domain = "Android",
                 year = 2
-            ),
+            )),
             onSignOut = {}
         )
     }
@@ -114,8 +128,8 @@ private fun HomeScreenMemberPreview() {
 @Composable
 private fun HomeScreenCoreTeamPreview() {
     InnogeeksTheme(darkTheme = true) {
-        HomeScreenContent(
-            session = Session(
+        HomeScreen(
+            state = HomeState(session = Session(
                 accessToken = "token",
                 refreshToken = "refresh",
                 userId = "1",
@@ -124,7 +138,7 @@ private fun HomeScreenCoreTeamPreview() {
                 role = "core_team",
                 domain = "Web Dev",
                 year = 3
-            ),
+            )),
             onSignOut = {}
         )
     }

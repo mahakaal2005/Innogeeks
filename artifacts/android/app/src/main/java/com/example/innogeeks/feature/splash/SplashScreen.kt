@@ -50,6 +50,23 @@ import kotlin.time.Duration.Companion.milliseconds
  *  2400 ms → SplashViewModel emits destination, caller navigates away
  */
 @Composable
+fun SplashRoot(
+    onNavigateToGuestHome: () -> Unit,
+    onNavigateToHome: () -> Unit,
+    vm: SplashViewModel = org.koin.androidx.compose.koinViewModel()
+) {
+    LaunchedEffect(Unit) {
+        vm.events.collect { event ->
+            when (event) {
+                is SplashEvent.NavigateToGuestHome -> onNavigateToGuestHome()
+                is SplashEvent.NavigateToHome -> onNavigateToHome()
+            }
+        }
+    }
+    SplashScreen()
+}
+
+@Composable
 fun SplashScreen() {
     // Drive animation phases with a simple integer phase state
     var phase by remember { mutableIntStateOf(0) }

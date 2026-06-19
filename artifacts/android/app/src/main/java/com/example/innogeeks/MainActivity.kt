@@ -29,7 +29,6 @@ import com.example.innogeeks.navigation.GuestHomeRoute
 import com.example.innogeeks.navigation.HomeRoute
 import com.example.innogeeks.navigation.LoginRoute
 import com.example.innogeeks.navigation.SplashRoute
-import com.example.innogeeks.feature.splash.SplashEvent
 import com.example.innogeeks.ui.theme.InnogeeksTheme
 
 class MainActivity : ComponentActivity() {
@@ -50,28 +49,18 @@ private fun AppRoot() {
 
     NavHost(navController = navController, startDestination = SplashRoute) {
         composable<SplashRoute> {
-            val splashVm: SplashViewModel = org.koin.androidx.compose.koinViewModel()
-
-            // Actually, we should collect events directly.
-            // But we don't have ObserveAsEvents defined yet. Let's just launch it.
-            androidx.compose.runtime.LaunchedEffect(Unit) {
-                splashVm.events.collect { event ->
-                    when (event) {
-                        is SplashEvent.NavigateToGuestHome -> {
-                            navController.navigate(GuestHomeRoute) {
-                                popUpTo(SplashRoute) { inclusive = true }
-                            }
-                        }
-                        is SplashEvent.NavigateToHome -> {
-                            navController.navigate(HomeRoute) {
-                                popUpTo(SplashRoute) { inclusive = true }
-                            }
-                        }
+            com.example.innogeeks.feature.splash.SplashRoot(
+                onNavigateToGuestHome = {
+                    navController.navigate(GuestHomeRoute) {
+                        popUpTo(SplashRoute) { inclusive = true }
+                    }
+                },
+                onNavigateToHome = {
+                    navController.navigate(HomeRoute) {
+                        popUpTo(SplashRoute) { inclusive = true }
                     }
                 }
-            }
-
-            SplashScreen()
+            )
         }
 
         composable<GuestHomeRoute> {
@@ -81,30 +70,25 @@ private fun AppRoot() {
         }
 
         composable<LoginRoute> {
-            val authVm: AuthViewModel = org.koin.androidx.compose.koinViewModel()
-            
-            androidx.compose.runtime.LaunchedEffect(Unit) {
-                authVm.events.collect { event ->
-                    when (event) {
-                        is com.example.innogeeks.feature.auth.AuthEvent.NavigateToHome -> {
-                            navController.navigate(HomeRoute) {
-                                popUpTo(LoginRoute) { inclusive = true }
-                                popUpTo(GuestHomeRoute) { inclusive = true }
-                            }
-                        }
+            com.example.innogeeks.feature.auth.LoginRoot(
+                onNavigateToHome = {
+                    navController.navigate(HomeRoute) {
+                        popUpTo(LoginRoute) { inclusive = true }
+                        popUpTo(GuestHomeRoute) { inclusive = true }
                     }
-                }
-            }
-
-            LoginScreen(
-                vm = authVm,
-                onBack = { navController.popBackStack() },
+                },
+                onBack = { navController.popBackStack() }
             )
         }
 
         composable<HomeRoute> {
-            val homeVm: HomeViewModel = org.koin.androidx.compose.koinViewModel()
-            HomeScreen(homeVm)
+            com.example.innogeeks.feature.home.HomeRoot(
+                onNavigateToGuestHome = {
+                    navController.navigate(GuestHomeRoute) {
+                        popUpTo(HomeRoute) { inclusive = true }
+                    }
+                }
+            )
         }
     }
 }

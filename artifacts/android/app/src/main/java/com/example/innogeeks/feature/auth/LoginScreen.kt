@@ -28,10 +28,22 @@ import com.example.innogeeks.ui.components.GradientBackground
 import com.example.innogeeks.ui.components.PrimaryButton
 
 @Composable
-fun LoginScreen(vm: AuthViewModel, onBack: () -> Unit = {}) {
+fun LoginRoot(
+    onNavigateToHome: () -> Unit,
+    onBack: () -> Unit,
+    vm: AuthViewModel = org.koin.androidx.compose.koinViewModel()
+) {
     val state by vm.state.collectAsStateWithLifecycle()
 
-    LoginScreenContent(
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        vm.events.collect { event ->
+            when (event) {
+                is AuthEvent.NavigateToHome -> onNavigateToHome()
+            }
+        }
+    }
+
+    LoginScreen(
         state = state,
         onEmailChange = vm::onEmailChange,
         onPasswordChange = vm::onPasswordChange,
@@ -41,7 +53,7 @@ fun LoginScreen(vm: AuthViewModel, onBack: () -> Unit = {}) {
 }
 
 @Composable
-fun LoginScreenContent(
+fun LoginScreen(
     state: LoginUiState,
     onEmailChange: (String) -> Unit,
     onPasswordChange: (String) -> Unit,
@@ -121,7 +133,7 @@ fun LoginScreenContent(
 @Composable
 private fun LoginScreenIdlePreview() {
     InnogeeksTheme(darkTheme = true) {
-        LoginScreenContent(
+        LoginScreen(
             state = LoginUiState(email = "test@example.com", password = "password"),
             onEmailChange = {},
             onPasswordChange = {},
@@ -135,7 +147,7 @@ private fun LoginScreenIdlePreview() {
 @Composable
 private fun LoginScreenLoadingPreview() {
     InnogeeksTheme(darkTheme = true) {
-        LoginScreenContent(
+        LoginScreen(
             state = LoginUiState(email = "test@example.com", password = "password", loading = true),
             onEmailChange = {},
             onPasswordChange = {},
@@ -149,7 +161,7 @@ private fun LoginScreenLoadingPreview() {
 @Composable
 private fun LoginScreenErrorPreview() {
     InnogeeksTheme(darkTheme = true) {
-        LoginScreenContent(
+        LoginScreen(
             state = LoginUiState(email = "test@example.com", password = "password", error = "Invalid email or password."),
             onEmailChange = {},
             onPasswordChange = {},
