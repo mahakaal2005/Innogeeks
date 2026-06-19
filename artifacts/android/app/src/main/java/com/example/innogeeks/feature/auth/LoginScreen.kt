@@ -27,9 +27,20 @@ import com.example.innogeeks.ui.components.GlassTextField
 import com.example.innogeeks.ui.components.GradientBackground
 import com.example.innogeeks.ui.components.PrimaryButton
 
+import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.flow.collectLatest
+
 @Composable
-fun LoginScreen(vm: AuthViewModel, onBack: () -> Unit = {}) {
+fun LoginScreen(vm: AuthViewModel, onBack: () -> Unit = {}, onNavigateToHome: () -> Unit = {}) {
     val state by vm.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(vm.events) {
+        vm.events.collectLatest { event ->
+            when (event) {
+                is AuthEvent.NavigateToHome -> onNavigateToHome()
+            }
+        }
+    }
 
     LoginScreenContent(
         state = state,

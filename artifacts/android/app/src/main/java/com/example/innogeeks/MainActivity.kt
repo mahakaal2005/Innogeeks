@@ -76,7 +76,12 @@ private fun AppRoot() {
                 composable<LoginRoute> {
                     LoginScreen(
                         vm = koinViewModel(),
-                        onBack = { navController.popBackStack() }
+                        onBack = { navController.popBackStack() },
+                        onNavigateToHome = {
+                            navController.navigate(HomeRoute) {
+                                popUpTo(GuestHomeRoute) { inclusive = true }
+                            }
+                        }
                     )
                 }
 
