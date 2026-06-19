@@ -123,11 +123,40 @@ fun ProfileScreen(
             
             GlassCard(Modifier.fillMaxWidth()) {
                 Column {
-                    ProfileSettingRow(
-                        icon = Icons.Rounded.Settings,
-                        label = "App Settings",
-                        onClick = { /* TODO */ }
-                    )
+                    val toggleTheme = com.example.innogeeks.ui.theme.LocalToggleTheme.current
+                    val isDark = com.example.innogeeks.ui.theme.LocalDarkTheme.current
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .background(ElectricCyan.copy(alpha = 0.1f), RoundedCornerShape(8.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    if (isDark) "🌙" else "☀️",
+                                    fontSize = 18.sp
+                                )
+                            }
+                            Spacer(Modifier.width(16.dp))
+                            Text("Dark Mode", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
+                        }
+                        Switch(
+                            checked = isDark,
+                            onCheckedChange = { toggleTheme() },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = MaterialTheme.colorScheme.surface,
+                                checkedTrackColor = ElectricCyan
+                            )
+                        )
+                    }
                 }
             }
 
