@@ -4,13 +4,10 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.innogeeks.core.common.Result
 import com.example.innogeeks.core.common.toUiText
-import com.example.innogeeks.core.presentation.ui.UiText
+import com.example.innogeeks.core.common.UiText
 import com.example.innogeeks.feature.attendance.data.AttendanceRepository
 import com.example.innogeeks.feature.attendance.data.dto.AttendanceSession
 import com.example.innogeeks.feature.attendance.data.dto.DomainMember
-import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -18,8 +15,8 @@ import kotlinx.coroutines.launch
 
 data class AttendanceUiState(
     val isLoading: Boolean = false,
-    val sessions: PersistentList<AttendanceSession> = persistentListOf(),
-    val roster: PersistentList<DomainMember> = persistentListOf(),
+    val sessions: List<AttendanceSession> = emptyList(),
+    val roster: List<DomainMember> = emptyList(),
     val presentUserIds: Set<String> = emptySet(),
     val error: UiText? = null
 )
@@ -48,7 +45,7 @@ class CoordinatorAttendanceViewModel(
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
             when (val res = repo.getSessions(domain)) {
-                is Result.Success -> _state.update { it.copy(isLoading = false, sessions = res.data.toPersistentList()) }
+                is Result.Success -> _state.update { it.copy(isLoading = false, sessions = res.data) }
                 is Result.Error -> _state.update { it.copy(isLoading = false, error = res.error.toUiText()) }
             }
         }
