@@ -11,10 +11,8 @@ import com.example.innogeeks.feature.attendance.data.dto.DomainMember
 import kotlinx.collections.immutable.PersistentList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
@@ -30,18 +28,12 @@ sealed interface AttendanceAction {
     data class LoadSessions(val domain: String) : AttendanceAction
 }
 
-sealed interface AttendanceEvent {
-    data class Error(val error: UiText) : AttendanceEvent
-}
 
 class CoordinatorAttendanceViewModel(
     private val repo: AttendanceRepository
 ) : ViewModel() {
     private val _state = MutableStateFlow(AttendanceUiState())
     val state = _state.asStateFlow()
-
-    private val _events = Channel<AttendanceEvent>()
-    val events = _events.receiveAsFlow()
 
     fun onAction(action: AttendanceAction) {
         when(action) {
@@ -56,7 +48,6 @@ class CoordinatorAttendanceViewModel(
                 is Result.Success -> _state.update { it.copy(isLoading = false, error = null, sessions = res.data.toPersistentList()) }
                 is Result.Error -> {
                     _state.update { it.copy(isLoading = false, error = res.error.toUiText()) }
-                    _events.send(AttendanceEvent.Error(res.error.toUiText()))
                 }
             }
         }

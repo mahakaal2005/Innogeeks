@@ -43,6 +43,7 @@ fun CoordinatorAttendanceScreen(
     val state by vm.state.collectAsState()
 
     // We launch a side-effect to load initial sessions. Hardcoded "android" domain for now
+    // TODO: The domain string "android" is hardcoded here. It should eventually come from the user's selected domain.
     LaunchedEffect(Unit) {
         vm.onAction(AttendanceAction.LoadSessions("android"))
     }
@@ -64,12 +65,22 @@ fun CoordinatorAttendanceScreen(
                         color = ElectricCyan
                     )
                 } else if (state.error != null) {
-                    Text(
-                        text = state.error?.asString() ?: "",
-                        color = MaterialTheme.colorScheme.error,
+                    Column(
                         modifier = Modifier.align(Alignment.Center),
-                        style = MaterialTheme.typography.bodyLarge
-                    )
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = state.error?.asString() ?: "",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        androidx.compose.material3.Button(
+                            onClick = { vm.onAction(AttendanceAction.LoadSessions("android")) }
+                        ) {
+                            Text("Retry")
+                        }
+                    }
                 } else if (state.sessions.isEmpty()) {
                     Text(
                         text = "No sessions found",
