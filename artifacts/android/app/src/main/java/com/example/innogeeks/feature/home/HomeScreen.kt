@@ -88,7 +88,13 @@ fun HomeScreen(vm: HomeViewModel, onNavigateToAttendance: () -> Unit = {}) {
                             onSignOut = vm::signOut,
                             onNavigateToAttendance = onNavigateToAttendance
                          )
-                    1 -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(currentNavItems[1].label + " Coming Soon", color = MaterialTheme.colorScheme.onBackground) }
+                    1 -> {
+                        if (role == "coordinator" || role == "core_team") {
+                            com.example.innogeeks.feature.attendance.CoordinatorAttendanceScreen()
+                        } else {
+                            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(currentNavItems[1].label + " Coming Soon", color = MaterialTheme.colorScheme.onBackground) }
+                        }
+                    }
                     2 -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(currentNavItems[2].label + " Coming Soon", color = MaterialTheme.colorScheme.onBackground) }
                     3 -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(currentNavItems[3].label + " Coming Soon", color = MaterialTheme.colorScheme.onBackground) }
                     4 -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(currentNavItems[4].label + " Coming Soon", color = MaterialTheme.colorScheme.onBackground) }
