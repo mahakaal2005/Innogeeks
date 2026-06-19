@@ -95,8 +95,20 @@ fun HomeScreen(vm: HomeViewModel, onNavigateToAttendance: () -> Unit = {}) {
                             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(currentNavItems[1].label + " Coming Soon", color = MaterialTheme.colorScheme.onBackground) }
                         }
                     }
-                    2 -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(currentNavItems[2].label + " Coming Soon", color = MaterialTheme.colorScheme.onBackground) }
-                    3 -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(currentNavItems[3].label + " Coming Soon", color = MaterialTheme.colorScheme.onBackground) }
+                    2 -> {
+                        if (role == "coordinator" || role == "core_team") {
+                            com.example.innogeeks.feature.resources.CoordinatorResourcesScreen()
+                        } else {
+                            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(currentNavItems[2].label + " Coming Soon", color = MaterialTheme.colorScheme.onBackground) }
+                        }
+                    }
+                    3 -> {
+                        if (role == "coordinator" || role == "core_team") {
+                            com.example.innogeeks.feature.events.CoordinatorEventsScreen()
+                        } else {
+                            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(currentNavItems[3].label + " Coming Soon", color = MaterialTheme.colorScheme.onBackground) }
+                        }
+                    }
                     4 -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(currentNavItems[4].label + " Coming Soon", color = MaterialTheme.colorScheme.onBackground) }
                 }
             }
