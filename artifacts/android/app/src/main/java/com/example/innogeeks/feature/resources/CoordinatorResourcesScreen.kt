@@ -113,7 +113,7 @@ fun CoordinatorResourcesScreen() {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomEnd) {
             Box(
                 modifier = Modifier
-                    .padding(bottom = 120.dp, end = 20.dp)
+                    .padding(bottom = 160.dp, end = 20.dp)
                     .size(64.dp)
                     .clip(CircleShape)
                     .background(ElectricCyan)
