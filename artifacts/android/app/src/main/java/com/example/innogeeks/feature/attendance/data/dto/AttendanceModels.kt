@@ -6,18 +6,21 @@ import kotlinx.serialization.Serializable
 data class AttendanceSession(
     val id: String,
     val title: String,
-    val date: String,
+    val domain: String = "",
+    @kotlinx.serialization.SerialName("session_date") val date: String,
     val presentCount: Int = 0,
     val totalCount: Int = 0
 )
 
 @Serializable
 data class DomainMember(
-    val userId: String,
+    @kotlinx.serialization.SerialName("id") val userId: String,
     val name: String,
-    val rollNumber: String,
+    val year: Int? = null,
     val isPresent: Boolean = false
-)
+) {
+    val rollNumber: String get() = year?.let { "Year $it" } ?: "N/A"
+}
 
 @Serializable
 data class CreateSessionRequest(

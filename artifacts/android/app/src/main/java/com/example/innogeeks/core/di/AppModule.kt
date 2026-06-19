@@ -20,7 +20,7 @@ val appModule = module {
     single { Network.supabaseRestApi(get()) }
 
     single { AuthRepository(get(), get(), get()) }
-    single<AttendanceRepository> { FakeAttendanceRepository() }
+    single<AttendanceRepository> { com.example.innogeeks.feature.attendance.data.SupabaseAttendanceRepository(get()) }
     
     viewModel { SplashViewModel(get()) }
     viewModel { AuthViewModel(get()) }

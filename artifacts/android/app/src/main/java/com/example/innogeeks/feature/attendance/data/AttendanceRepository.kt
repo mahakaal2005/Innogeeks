@@ -24,9 +24,9 @@ class FakeAttendanceRepository : AttendanceRepository {
     }
     override suspend fun createSession(req: CreateSessionRequest): Result<AttendanceSession, DataError.Network> {
         val newId = UUID.randomUUID().toString()
-        val newSession = AttendanceSession(newId, req.title, "2026-06-20")
+        val newSession = AttendanceSession(newId, req.title, req.domain, "2026-06-20")
         sessions.add(newSession)
-        rosters[newId] = mutableListOf(DomainMember("1", "John Doe", "2024001", false))
+        rosters[newId] = mutableListOf(DomainMember("1", "John Doe", 2, false))
         return Result.Success(newSession)
     }
     override suspend fun updateAttendance(sessionId: String, req: BulkAttendanceRequest): Result<Unit, DataError.Network> {
