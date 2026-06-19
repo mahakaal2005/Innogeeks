@@ -1,5 +1,7 @@
 package com.example.innogeeks.feature.splash
 
+import androidx.compose.ui.tooling.preview.Preview
+import com.example.innogeeks.ui.theme.InnogeeksTheme
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -161,5 +163,13 @@ fun SplashScreen() {
                 textAlign = TextAlign.Center,
             )
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun SplashScreenPreview() {
+    InnogeeksTheme(darkTheme = true) {
+        SplashScreen()
     }
 }

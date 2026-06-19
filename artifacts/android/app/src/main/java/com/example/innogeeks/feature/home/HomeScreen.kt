@@ -1,5 +1,8 @@
 package com.example.innogeeks.feature.home
 
+import androidx.compose.ui.tooling.preview.Preview
+import com.example.innogeeks.ui.theme.InnogeeksTheme
+import com.example.innogeeks.core.datastore.Session
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -28,6 +31,14 @@ import com.example.innogeeks.ui.theme.domainColor
 @Composable
 fun HomeScreen(vm: HomeViewModel) {
     val session by vm.session.collectAsStateWithLifecycle()
+    HomeScreenContent(
+        session = session,
+        onSignOut = vm::signOut
+    )
+}
+
+@Composable
+fun HomeScreenContent(session: Session?, onSignOut: () -> Unit) {
     val role = session?.role ?: "public"
     val domain = session?.domain
 
@@ -73,9 +84,49 @@ fun HomeScreen(vm: HomeViewModel) {
             }
 
             Spacer(Modifier.height(28.dp))
-            PrimaryButton("Sign Out", onClick = vm::signOut)
+            PrimaryButton("Sign Out", onClick = onSignOut)
             Spacer(Modifier.height(20.dp))
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun HomeScreenMemberPreview() {
+    InnogeeksTheme(darkTheme = true) {
+        HomeScreenContent(
+            session = Session(
+                accessToken = "token",
+                refreshToken = "refresh",
+                userId = "1",
+                email = "user@example.com",
+                name = "John Doe",
+                role = "member",
+                domain = "Android",
+                year = 2
+            ),
+            onSignOut = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun HomeScreenCoreTeamPreview() {
+    InnogeeksTheme(darkTheme = true) {
+        HomeScreenContent(
+            session = Session(
+                accessToken = "token",
+                refreshToken = "refresh",
+                userId = "1",
+                email = "core@example.com",
+                name = "Jane Smith",
+                role = "core_team",
+                domain = "Web Dev",
+                year = 3
+            ),
+            onSignOut = {}
+        )
     }
 }
 

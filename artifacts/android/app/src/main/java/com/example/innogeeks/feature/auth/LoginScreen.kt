@@ -1,5 +1,7 @@
 package com.example.innogeeks.feature.auth
 
+import androidx.compose.ui.tooling.preview.Preview
+import com.example.innogeeks.ui.theme.InnogeeksTheme
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,6 +30,24 @@ import com.example.innogeeks.ui.components.PrimaryButton
 @Composable
 fun LoginScreen(vm: AuthViewModel, onBack: () -> Unit = {}) {
     val state by vm.state.collectAsStateWithLifecycle()
+
+    LoginScreenContent(
+        state = state,
+        onEmailChange = vm::onEmailChange,
+        onPasswordChange = vm::onPasswordChange,
+        onSignIn = vm::signIn,
+        onBack = onBack
+    )
+}
+
+@Composable
+fun LoginScreenContent(
+    state: LoginUiState,
+    onEmailChange: (String) -> Unit,
+    onPasswordChange: (String) -> Unit,
+    onSignIn: () -> Unit,
+    onBack: () -> Unit
+) {
 
     GradientBackground {
         Column(
@@ -68,13 +88,13 @@ fun LoginScreen(vm: AuthViewModel, onBack: () -> Unit = {}) {
             GlassCard(Modifier.fillMaxWidth()) {
                 GlassTextField(
                     value = state.email,
-                    onValueChange = vm::onEmailChange,
+                    onValueChange = onEmailChange,
                     label = "Email",
                 )
                 Spacer(Modifier.height(14.dp))
                 GlassTextField(
                     value = state.password,
-                    onValueChange = vm::onPasswordChange,
+                    onValueChange = onPasswordChange,
                     label = "Password",
                     isPassword = true,
                 )
@@ -89,10 +109,52 @@ fun LoginScreen(vm: AuthViewModel, onBack: () -> Unit = {}) {
                 Spacer(Modifier.height(20.dp))
                 PrimaryButton(
                     text = if (state.loading) "Signing in…" else "Sign In",
-                    onClick = vm::signIn,
+                    onClick = onSignIn,
                     enabled = !state.loading,
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun LoginScreenIdlePreview() {
+    InnogeeksTheme(darkTheme = true) {
+        LoginScreenContent(
+            state = LoginUiState(email = "test@example.com", password = "password"),
+            onEmailChange = {},
+            onPasswordChange = {},
+            onSignIn = {},
+            onBack = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun LoginScreenLoadingPreview() {
+    InnogeeksTheme(darkTheme = true) {
+        LoginScreenContent(
+            state = LoginUiState(email = "test@example.com", password = "password", loading = true),
+            onEmailChange = {},
+            onPasswordChange = {},
+            onSignIn = {},
+            onBack = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun LoginScreenErrorPreview() {
+    InnogeeksTheme(darkTheme = true) {
+        LoginScreenContent(
+            state = LoginUiState(email = "test@example.com", password = "password", error = "Invalid email or password."),
+            onEmailChange = {},
+            onPasswordChange = {},
+            onSignIn = {},
+            onBack = {}
+        )
     }
 }

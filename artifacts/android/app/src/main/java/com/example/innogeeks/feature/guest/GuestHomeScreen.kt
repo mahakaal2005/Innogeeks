@@ -1,5 +1,7 @@
 package com.example.innogeeks.feature.guest
 
+import androidx.compose.ui.tooling.preview.Preview
+import com.example.innogeeks.ui.theme.InnogeeksTheme
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -889,5 +891,43 @@ private fun GuestProfileTab(onLoginTapped: () -> Unit) {
         }
 
         Spacer(Modifier.height(32.dp))
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun GuestHomeScreenPreview() {
+    InnogeeksTheme(darkTheme = true) {
+        GuestHomeScreen(onLoginTapped = {})
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun GuestDomainsTabPreview() {
+    InnogeeksTheme(darkTheme = true) {
+        Box(modifier = Modifier.background(BgColor)) {
+            GuestDomainsTab()
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun GuestEventsTabPreview() {
+    InnogeeksTheme(darkTheme = true) {
+        Box(modifier = Modifier.background(BgColor)) {
+            GuestEventsTab()
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun GuestProfileTabPreview() {
+    InnogeeksTheme(darkTheme = true) {
+        Box(modifier = Modifier.background(BgColor)) {
+            GuestProfileTab(onLoginTapped = {})
+        }
     }
 }
