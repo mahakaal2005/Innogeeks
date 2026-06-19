@@ -1,6 +1,11 @@
 package com.example.innogeeks.feature.home
 
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Person
 import com.example.innogeeks.ui.theme.InnogeeksTheme
 import com.example.innogeeks.core.datastore.Session
 import androidx.compose.foundation.clickable
@@ -68,26 +73,106 @@ fun HomeScreenContent(session: Session?, onSignOut: () -> Unit, onNavigateToAtte
             }
 
             Spacer(Modifier.height(24.dp))
-            FeatureCard("My Application", "Track your recruitment status")
-            Spacer(Modifier.height(12.dp))
-            FeatureCard("Attendance", "View your attendance summary", onClick = onNavigateToAttendance)
-            Spacer(Modifier.height(12.dp))
-            FeatureCard("Resources", "Browse domain learning resources")
-            Spacer(Modifier.height(12.dp))
-            FeatureCard("Events", "See upcoming club events")
 
             if (role == "coordinator" || role == "core_team") {
-                Spacer(Modifier.height(12.dp))
-                FeatureCard("Coordinator Tools", "Sessions, approvals & resources")
-            }
-            if (role == "core_team") {
-                Spacer(Modifier.height(12.dp))
-                FeatureCard("Admin", "Roles, recruitment window & all data")
+                CoordinatorDashboard(onNavigateToAttendance = onNavigateToAttendance)
+            } else {
+                MemberDashboard(onNavigateToAttendance = onNavigateToAttendance)
             }
 
             Spacer(Modifier.height(28.dp))
             PrimaryButton("Sign Out", onClick = onSignOut)
             Spacer(Modifier.height(20.dp))
+        }
+    }
+}
+
+@Composable
+private fun MemberDashboard(onNavigateToAttendance: () -> Unit) {
+    Column {
+        FeatureCard("My Application", "Track your recruitment status")
+        Spacer(Modifier.height(12.dp))
+        FeatureCard("Attendance", "View your attendance summary", onClick = onNavigateToAttendance)
+        Spacer(Modifier.height(12.dp))
+        FeatureCard("Resources", "Browse domain learning resources")
+        Spacer(Modifier.height(12.dp))
+        FeatureCard("Events", "See upcoming club events")
+    }
+}
+
+@Composable
+private fun CoordinatorDashboard(onNavigateToAttendance: () -> Unit) {
+    Column {
+        Text("Coordinator Overview", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+        Spacer(Modifier.height(12.dp))
+        Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp)) {
+            GlassCard(Modifier.weight(1f).clickable { onNavigateToAttendance() }) {
+                Column {
+                    androidx.compose.material3.Icon(
+                        Icons.Default.DateRange,
+                        contentDescription = null,
+                        tint = com.example.innogeeks.ui.theme.ElectricCyan
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text("Attendance", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
+                    Text("Log & View", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            GlassCard(Modifier.weight(1f)) {
+                Column {
+                    androidx.compose.material3.Icon(
+                        Icons.Default.Settings,
+                        contentDescription = null,
+                        tint = com.example.innogeeks.ui.theme.ElectricCyan
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text("Resources", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
+                    Text("Manage content", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+        Spacer(Modifier.height(12.dp))
+        Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp)) {
+            GlassCard(Modifier.weight(1f)) {
+                Column {
+                    androidx.compose.material3.Icon(
+                        Icons.Default.Star,
+                        contentDescription = null,
+                        tint = com.example.innogeeks.ui.theme.ElectricCyan
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text("Events", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
+                    Text("Plan upcoming", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            GlassCard(Modifier.weight(1f)) {
+                Column {
+                    androidx.compose.material3.Icon(
+                        Icons.Default.Person,
+                        contentDescription = null,
+                        tint = com.example.innogeeks.ui.theme.ElectricCyan
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text("Members", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
+                    Text("Review apps", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+
+        Spacer(Modifier.height(24.dp))
+        Text("Domain Analytics", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+        Spacer(Modifier.height(12.dp))
+        GlassCard(Modifier.fillMaxWidth()) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween) {
+                Column {
+                    Text("Total Members", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("42", style = MaterialTheme.typography.headlineMedium, color = com.example.innogeeks.ui.theme.ElectricCyan)
+                }
+                Column(horizontalAlignment = androidx.compose.ui.Alignment.End) {
+                    Text("Sessions Held", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("8", style = MaterialTheme.typography.headlineMedium, color = com.example.innogeeks.ui.theme.ElectricCyan)
+                }
+            }
         }
     }
 }
