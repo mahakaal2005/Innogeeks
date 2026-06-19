@@ -131,7 +131,7 @@ fun SplashScreen() {
 
             // ── Logo ──────────────────────────────────────────────────────
             Image(
-                painter = painterResource(R.drawable.ic_innogeeks_logo),
+                painter = painterResource(R.drawable.app_logo),
                 contentDescription = "Innogeeks Logo",
                 modifier = Modifier
                     .size(108.dp)
