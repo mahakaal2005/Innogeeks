@@ -9,6 +9,31 @@ import androidx.compose.material.icons.filled.Person
 import com.example.innogeeks.ui.theme.InnogeeksTheme
 import com.example.innogeeks.core.datastore.Session
 import androidx.compose.foundation.clickable
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.rounded.AccountCircle
+import androidx.compose.material.icons.rounded.CalendarMonth
+import androidx.compose.material.icons.rounded.Category
+import androidx.compose.material.icons.rounded.Home
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.foundation.layout.Arrangement
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.haze
+import dev.chrisbanes.haze.hazeChild
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -37,11 +62,103 @@ import com.example.innogeeks.ui.theme.domainColor
 @Composable
 fun HomeScreen(vm: HomeViewModel, onNavigateToAttendance: () -> Unit = {}) {
     val state by vm.state.collectAsStateWithLifecycle()
-    HomeScreenContent(
-        session = state.session,
-        onSignOut = vm::signOut,
-        onNavigateToAttendance = onNavigateToAttendance
-    )
+    var selectedTab by remember { mutableIntStateOf(0) }
+    val hazeState = remember { HazeState() }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .haze(
+                    state = hazeState,
+                    backgroundColor = MaterialTheme.colorScheme.background
+                )
+        ) {
+            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                when (selectedTab) {
+                    0 -> HomeScreenContent(
+                            session = state.session,
+                            onSignOut = vm::signOut,
+                            onNavigateToAttendance = onNavigateToAttendance
+                         )
+                    1 -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Domains/Projects Coming Soon", color = MaterialTheme.colorScheme.onBackground) }
+                    2 -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Events Coming Soon", color = MaterialTheme.colorScheme.onBackground) }
+                    3 -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Profile Coming Soon", color = MaterialTheme.colorScheme.onBackground) }
+                }
+            }
+        }
+
+        Box(modifier = Modifier.align(Alignment.BottomCenter)) {
+            HomeBottomNav(
+                selected = selectedTab,
+                onSelect = { selectedTab = it },
+                hazeState = hazeState
+            )
+        }
+    }
+}
+
+private data class NavItem(val label: String, val icon: ImageVector)
+private val navItems = listOf(
+    NavItem("Home", Icons.Rounded.Home),
+    NavItem("Domains", Icons.Rounded.Category),
+    NavItem("Events", Icons.Rounded.CalendarMonth),
+    NavItem("Profile", Icons.Rounded.AccountCircle),
+)
+
+@Composable
+private fun HomeBottomNav(
+    selected: Int,
+    onSelect: (Int) -> Unit,
+    hazeState: HazeState
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .windowInsetsPadding(WindowInsets.navigationBars)
+            .padding(horizontal = 24.dp, vertical = 24.dp)
+            .hazeChild(state = hazeState, shape = CircleShape)
+            .border(1.dp, MaterialTheme.colorScheme.onBackground.copy(alpha = 0.1f), CircleShape)
+            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f), CircleShape)
+            .padding(vertical = 12.dp),
+        horizontalArrangement = Arrangement.SpaceAround,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        navItems.forEachIndexed { index, item ->
+            val isSelected = index == selected
+            val iconAlpha by animateFloatAsState(
+                targetValue = if (isSelected) 1f else 0.4f,
+                animationSpec = tween(200),
+                label = "navAlpha$index"
+            )
+            Column(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(12.dp))
+                    .clickable { onSelect(index) }
+                    .padding(horizontal = 16.dp, vertical = 4.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                androidx.compose.material3.Icon(
+                    item.icon,
+                    contentDescription = item.label,
+                    tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = iconAlpha),
+                    modifier = Modifier.size(22.dp)
+                )
+                Spacer(Modifier.height(2.dp))
+                Text(
+                    item.label,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground.copy(alpha = iconAlpha),
+                        fontSize = 10.sp,
+                    )
+                )
+            }
+        }
+    }
 }
 
 @Composable
@@ -82,7 +199,7 @@ fun HomeScreenContent(session: Session?, onSignOut: () -> Unit, onNavigateToAtte
 
             Spacer(Modifier.height(28.dp))
             PrimaryButton("Sign Out", onClick = onSignOut)
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.height(140.dp))
         }
     }
 }
