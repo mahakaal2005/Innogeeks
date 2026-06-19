@@ -106,10 +106,16 @@ fun HomeScreen(vm: HomeViewModel, onNavigateToAttendance: () -> Unit = {}) {
                         if (role == "coordinator" || role == "core_team") {
                             com.example.innogeeks.feature.events.CoordinatorEventsScreen()
                         } else {
-                            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(currentNavItems[3].label + " Coming Soon", color = MaterialTheme.colorScheme.onBackground) }
+                            com.example.innogeeks.feature.profile.ProfileScreen(session = state.session, onSignOut = vm::signOut)
                         }
                     }
-                    4 -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(currentNavItems[4].label + " Coming Soon", color = MaterialTheme.colorScheme.onBackground) }
+                    4 -> {
+                        if (role == "coordinator" || role == "core_team") {
+                            com.example.innogeeks.feature.profile.ProfileScreen(session = state.session, onSignOut = vm::signOut)
+                        } else {
+                            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Coming Soon", color = MaterialTheme.colorScheme.onBackground) }
+                        }
+                    }
                 }
             }
         }
@@ -229,8 +235,6 @@ fun HomeScreenContent(session: Session?, onSignOut: () -> Unit, onNavigateToAtte
                 MemberDashboard(onNavigateToAttendance = onNavigateToAttendance)
             }
 
-            Spacer(Modifier.height(28.dp))
-            PrimaryButton("Sign Out", onClick = onSignOut)
             Spacer(Modifier.height(140.dp))
         }
     }
