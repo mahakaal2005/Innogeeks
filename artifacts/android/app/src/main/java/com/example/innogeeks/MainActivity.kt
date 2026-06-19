@@ -19,9 +19,17 @@ import com.example.innogeeks.feature.auth.LoginScreen
 import com.example.innogeeks.feature.guest.GuestHomeScreen
 import com.example.innogeeks.feature.home.HomeScreen
 import com.example.innogeeks.feature.home.HomeViewModel
-import com.example.innogeeks.feature.splash.SplashDestination
 import com.example.innogeeks.feature.splash.SplashScreen
 import com.example.innogeeks.feature.splash.SplashViewModel
+import com.example.innogeeks.ui.theme.InnogeeksTheme
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.example.innogeeks.navigation.GuestHomeRoute
+import com.example.innogeeks.navigation.HomeRoute
+import com.example.innogeeks.navigation.LoginRoute
+import com.example.innogeeks.navigation.SplashRoute
+import com.example.innogeeks.feature.splash.SplashEvent
 import com.example.innogeeks.ui.theme.InnogeeksTheme
 
 class MainActivity : ComponentActivity() {
@@ -38,33 +46,65 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun AppRoot() {
-    val splashVm: SplashViewModel = org.koin.androidx.compose.koinViewModel()
-    val splashDest by splashVm.destination.collectAsStateWithLifecycle()
+    val navController = rememberNavController()
 
-    var showLogin by remember { mutableStateOf(false) }
+    NavHost(navController = navController, startDestination = SplashRoute) {
+        composable<SplashRoute> {
+            val splashVm: SplashViewModel = org.koin.androidx.compose.koinViewModel()
 
-    val authRepo: com.example.innogeeks.feature.auth.AuthRepository = org.koin.compose.koinInject()
-    val session by authRepo.sessionFlow.collectAsStateWithLifecycle(initialValue = null)
+            // Actually, we should collect events directly.
+            // But we don't have ObserveAsEvents defined yet. Let's just launch it.
+            androidx.compose.runtime.LaunchedEffect(Unit) {
+                splashVm.events.collect { event ->
+                    when (event) {
+                        is SplashEvent.NavigateToGuestHome -> {
+                            navController.navigate(GuestHomeRoute) {
+                                popUpTo(SplashRoute) { inclusive = true }
+                            }
+                        }
+                        is SplashEvent.NavigateToHome -> {
+                            navController.navigate(HomeRoute) {
+                                popUpTo(SplashRoute) { inclusive = true }
+                            }
+                        }
+                    }
+                }
+            }
 
-    when {
-        splashDest is SplashDestination.Pending -> {
             SplashScreen()
         }
-        session != null -> {
-            val homeVm: HomeViewModel = org.koin.androidx.compose.koinViewModel()
-            HomeScreen(homeVm)
+
+        composable<GuestHomeRoute> {
+            GuestHomeScreen(
+                onLoginTapped = { navController.navigate(LoginRoute) }
+            )
         }
-        showLogin -> {
+
+        composable<LoginRoute> {
             val authVm: AuthViewModel = org.koin.androidx.compose.koinViewModel()
+            
+            androidx.compose.runtime.LaunchedEffect(Unit) {
+                authVm.events.collect { event ->
+                    when (event) {
+                        is com.example.innogeeks.feature.auth.AuthEvent.NavigateToHome -> {
+                            navController.navigate(HomeRoute) {
+                                popUpTo(LoginRoute) { inclusive = true }
+                                popUpTo(GuestHomeRoute) { inclusive = true }
+                            }
+                        }
+                    }
+                }
+            }
+
             LoginScreen(
                 vm = authVm,
-                onBack = { showLogin = false },
+                onBack = { navController.popBackStack() },
             )
         }
-        else -> {
-            GuestHomeScreen(
-                onLoginTapped = { showLogin = true },
-            )
+
+        composable<HomeRoute> {
+            val homeVm: HomeViewModel = org.koin.androidx.compose.koinViewModel()
+            HomeScreen(homeVm)
         }
     }
 }

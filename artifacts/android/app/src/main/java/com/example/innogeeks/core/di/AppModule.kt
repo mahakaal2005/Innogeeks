@@ -18,7 +18,7 @@ val appModule = module {
 
     single { AuthRepository(get(), get(), get()) }
     
-    viewModel { SplashViewModel() }
+    viewModel { SplashViewModel(get()) }
     viewModel { AuthViewModel(get()) }
     viewModel { HomeViewModel(get()) }
 }

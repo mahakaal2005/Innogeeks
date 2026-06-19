@@ -9,21 +9,35 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
-sealed interface SplashDestination {
-    object Pending : SplashDestination
-    object GuestHome : SplashDestination
+import com.example.innogeeks.feature.auth.AuthRepository
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.receiveAsFlow
+
+sealed interface SplashEvent {
+    data object NavigateToGuestHome : SplashEvent
+    data object NavigateToHome : SplashEvent
 }
 
-class SplashViewModel : ViewModel() {
+class SplashViewModel(
+    private val authRepository: AuthRepository
+) : ViewModel() {
 
-    private val _destination = MutableStateFlow<SplashDestination>(SplashDestination.Pending)
-    val destination: StateFlow<SplashDestination> = _destination.asStateFlow()
+    private val _events = Channel<SplashEvent>()
+    val events = _events.receiveAsFlow()
 
     init {
         viewModelScope.launch {
-            // Let the splash animation complete (logo + wordmark + tagline = ~2.4s)
+            // Wait for splash animation
             delay(2_400L.milliseconds)
-            _destination.value = SplashDestination.GuestHome
+            
+            // Check session
+            val session = authRepository.sessionFlow.firstOrNull()
+            if (session != null) {
+                _events.send(SplashEvent.NavigateToHome)
+            } else {
+                _events.send(SplashEvent.NavigateToGuestHome)
+            }
         }
     }
 }

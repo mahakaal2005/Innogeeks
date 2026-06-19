@@ -9,6 +9,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.receiveAsFlow
+
+sealed interface AuthEvent {
+    data object NavigateToHome : AuthEvent
+    // Could add ShowSnackbar for error instead of updating state, but state error is fine too
+}
+
 data class LoginUiState(
     val email: String = "",
     val password: String = "",
@@ -20,6 +28,9 @@ class AuthViewModel(private val repo: AuthRepository) : ViewModel() {
 
     private val _state = MutableStateFlow(LoginUiState())
     val state: StateFlow<LoginUiState> = _state.asStateFlow()
+
+    private val _events = Channel<AuthEvent>()
+    val events = _events.receiveAsFlow()
 
     fun onEmailChange(value: String) = _state.update { it.copy(email = value, error = null) }
     fun onPasswordChange(value: String) = _state.update { it.copy(password = value, error = null) }
@@ -35,8 +46,10 @@ class AuthViewModel(private val repo: AuthRepository) : ViewModel() {
         viewModelScope.launch {
             when (val result = repo.signIn(current.email, current.password)) {
                 is Resource.Error -> _state.update { it.copy(loading = false, error = result.message) }
-                else -> _state.update { it.copy(loading = false) }
-                // On success, the session flow emits and the root navigates to Home.
+                else -> {
+                    _state.update { it.copy(loading = false) }
+                    _events.send(AuthEvent.NavigateToHome)
+                }
             }
         }
     }
