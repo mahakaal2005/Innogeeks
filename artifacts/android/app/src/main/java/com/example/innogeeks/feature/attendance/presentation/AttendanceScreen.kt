@@ -65,7 +65,7 @@ fun CoordinatorAttendanceScreen(
                     )
                 } else if (state.error != null) {
                     Text(
-                        text = state.error!!.asString(),
+                        text = state.error?.asString() ?: "",
                         color = MaterialTheme.colorScheme.error,
                         modifier = Modifier.align(Alignment.Center),
                         style = MaterialTheme.typography.bodyLarge

@@ -6,6 +6,9 @@ import com.example.innogeeks.feature.auth.AuthRepository
 import com.example.innogeeks.core.network.Network
 import com.example.innogeeks.feature.home.HomeViewModel
 import com.example.innogeeks.feature.splash.SplashViewModel
+import com.example.innogeeks.feature.attendance.data.AttendanceRepository
+import com.example.innogeeks.feature.attendance.data.FakeAttendanceRepository
+import com.example.innogeeks.feature.attendance.presentation.CoordinatorAttendanceViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
@@ -17,8 +20,10 @@ val appModule = module {
     single { Network.supabaseRestApi(get()) }
 
     single { AuthRepository(get(), get(), get()) }
+    single<AttendanceRepository> { FakeAttendanceRepository() }
     
     viewModel { SplashViewModel(get()) }
     viewModel { AuthViewModel(get()) }
     viewModel { HomeViewModel(get()) }
+    viewModel { CoordinatorAttendanceViewModel(get()) }
 }
