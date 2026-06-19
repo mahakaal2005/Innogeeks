@@ -8,15 +8,20 @@ import com.example.innogeeks.core.common.UiText
 import com.example.innogeeks.feature.attendance.data.AttendanceRepository
 import com.example.innogeeks.feature.attendance.data.dto.AttendanceSession
 import com.example.innogeeks.feature.attendance.data.dto.DomainMember
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toPersistentList
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 data class AttendanceUiState(
     val isLoading: Boolean = false,
-    val sessions: List<AttendanceSession> = emptyList(),
-    val roster: List<DomainMember> = emptyList(),
+    val sessions: PersistentList<AttendanceSession> = persistentListOf(),
+    val roster: PersistentList<DomainMember> = persistentListOf(),
     val presentUserIds: Set<String> = emptySet(),
     val error: UiText? = null
 )
@@ -35,18 +40,24 @@ class CoordinatorAttendanceViewModel(
     private val _state = MutableStateFlow(AttendanceUiState())
     val state = _state.asStateFlow()
 
+    private val _events = Channel<AttendanceEvent>()
+    val events = _events.receiveAsFlow()
+
     fun onAction(action: AttendanceAction) {
         when(action) {
             is AttendanceAction.LoadSessions -> loadSessions(action.domain)
         }
     }
 
-    fun loadSessions(domain: String) {
+    private fun loadSessions(domain: String) {
         viewModelScope.launch {
             _state.update { it.copy(isLoading = true) }
             when (val res = repo.getSessions(domain)) {
-                is Result.Success -> _state.update { it.copy(isLoading = false, sessions = res.data) }
-                is Result.Error -> _state.update { it.copy(isLoading = false, error = res.error.toUiText()) }
+                is Result.Success -> _state.update { it.copy(isLoading = false, sessions = res.data.toPersistentList()) }
+                is Result.Error -> {
+                    _state.update { it.copy(isLoading = false, error = res.error.toUiText()) }
+                    _events.send(AttendanceEvent.Error(res.error.toUiText()))
+                }
             }
         }
     }
