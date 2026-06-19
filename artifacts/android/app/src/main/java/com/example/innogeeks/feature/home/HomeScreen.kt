@@ -65,6 +65,9 @@ fun HomeScreen(vm: HomeViewModel, onNavigateToAttendance: () -> Unit = {}) {
     var selectedTab by remember { mutableIntStateOf(0) }
     val hazeState = remember { HazeState() }
 
+    val role = state.session?.role ?: "public"
+    val currentNavItems = if (role == "coordinator" || role == "core_team") coordinatorNavItems else memberNavItems
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -85,9 +88,10 @@ fun HomeScreen(vm: HomeViewModel, onNavigateToAttendance: () -> Unit = {}) {
                             onSignOut = vm::signOut,
                             onNavigateToAttendance = onNavigateToAttendance
                          )
-                    1 -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Domains/Projects Coming Soon", color = MaterialTheme.colorScheme.onBackground) }
-                    2 -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Events Coming Soon", color = MaterialTheme.colorScheme.onBackground) }
-                    3 -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text("Profile Coming Soon", color = MaterialTheme.colorScheme.onBackground) }
+                    1 -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(currentNavItems[1].label + " Coming Soon", color = MaterialTheme.colorScheme.onBackground) }
+                    2 -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(currentNavItems[2].label + " Coming Soon", color = MaterialTheme.colorScheme.onBackground) }
+                    3 -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(currentNavItems[3].label + " Coming Soon", color = MaterialTheme.colorScheme.onBackground) }
+                    4 -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(currentNavItems[4].label + " Coming Soon", color = MaterialTheme.colorScheme.onBackground) }
                 }
             }
         }
@@ -95,6 +99,7 @@ fun HomeScreen(vm: HomeViewModel, onNavigateToAttendance: () -> Unit = {}) {
         Box(modifier = Modifier.align(Alignment.BottomCenter)) {
             HomeBottomNav(
                 selected = selectedTab,
+                navItems = currentNavItems,
                 onSelect = { selectedTab = it },
                 hazeState = hazeState
             )
@@ -103,9 +108,17 @@ fun HomeScreen(vm: HomeViewModel, onNavigateToAttendance: () -> Unit = {}) {
 }
 
 private data class NavItem(val label: String, val icon: ImageVector)
-private val navItems = listOf(
+private val memberNavItems = listOf(
     NavItem("Home", Icons.Rounded.Home),
     NavItem("Domains", Icons.Rounded.Category),
+    NavItem("Events", Icons.Rounded.CalendarMonth),
+    NavItem("Profile", Icons.Rounded.AccountCircle),
+)
+
+private val coordinatorNavItems = listOf(
+    NavItem("Home", Icons.Rounded.Home),
+    NavItem("Attendance", Icons.Default.DateRange),
+    NavItem("Resources", Icons.Default.Settings),
     NavItem("Events", Icons.Rounded.CalendarMonth),
     NavItem("Profile", Icons.Rounded.AccountCircle),
 )
@@ -113,6 +126,7 @@ private val navItems = listOf(
 @Composable
 private fun HomeBottomNav(
     selected: Int,
+    navItems: List<NavItem>,
     onSelect: (Int) -> Unit,
     hazeState: HazeState
 ) {
@@ -220,74 +234,110 @@ private fun MemberDashboard(onNavigateToAttendance: () -> Unit) {
 @Composable
 private fun CoordinatorDashboard(onNavigateToAttendance: () -> Unit) {
     Column {
-        Text("Coordinator Overview", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+        // --- SECTION A: Session Progress ---
+        Text("Domain Progress", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
         Spacer(Modifier.height(12.dp))
-        Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp)) {
-            GlassCard(Modifier.weight(1f).clickable { onNavigateToAttendance() }) {
-                Column {
-                    androidx.compose.material3.Icon(
-                        Icons.Default.DateRange,
-                        contentDescription = null,
-                        tint = com.example.innogeeks.ui.theme.ElectricCyan
+        GlassCard(Modifier.fillMaxWidth().clickable { onNavigateToAttendance() }) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // Circular Progress
+                Box(contentAlignment = Alignment.Center, modifier = Modifier.size(64.dp)) {
+                    androidx.compose.material3.CircularProgressIndicator(
+                        progress = { 0.8f },
+                        color = com.example.innogeeks.ui.theme.ElectricCyan,
+                        trackColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f),
+                        strokeWidth = 6.dp,
+                        modifier = Modifier.fillMaxSize()
                     )
-                    Spacer(Modifier.height(8.dp))
-                    Text("Attendance", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
-                    Text("Log & View", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("8/10", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
                 }
-            }
-            GlassCard(Modifier.weight(1f)) {
+                Spacer(Modifier.width(20.dp))
                 Column {
-                    androidx.compose.material3.Icon(
-                        Icons.Default.Settings,
-                        contentDescription = null,
-                        tint = com.example.innogeeks.ui.theme.ElectricCyan
-                    )
+                    Text("Sessions Completed", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
+                    Text("2 more planned this semester", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(Modifier.height(8.dp))
-                    Text("Resources", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
-                    Text("Manage content", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-        }
-        Spacer(Modifier.height(12.dp))
-        Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(12.dp)) {
-            GlassCard(Modifier.weight(1f)) {
-                Column {
-                    androidx.compose.material3.Icon(
-                        Icons.Default.Star,
-                        contentDescription = null,
-                        tint = com.example.innogeeks.ui.theme.ElectricCyan
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    Text("Events", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
-                    Text("Plan upcoming", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-            GlassCard(Modifier.weight(1f)) {
-                Column {
-                    androidx.compose.material3.Icon(
-                        Icons.Default.Person,
-                        contentDescription = null,
-                        tint = com.example.innogeeks.ui.theme.ElectricCyan
-                    )
-                    Spacer(Modifier.height(8.dp))
-                    Text("Members", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
-                    Text("Review apps", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text("42 Active Members", style = MaterialTheme.typography.labelSmall, color = com.example.innogeeks.ui.theme.ElectricCyan)
                 }
             }
         }
 
-        Spacer(Modifier.height(24.dp))
-        Text("Domain Analytics", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+        Spacer(Modifier.height(28.dp))
+
+        // --- SECTION B: Active Events ---
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
+            Text("Upcoming Events", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+            Text("View All", style = MaterialTheme.typography.labelSmall, color = com.example.innogeeks.ui.theme.ElectricCyan)
+        }
         Spacer(Modifier.height(12.dp))
+        
+        // A single large featured event card for now
         GlassCard(Modifier.fillMaxWidth()) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.SpaceBetween) {
-                Column {
-                    Text("Total Members", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("42", style = MaterialTheme.typography.headlineMedium, color = com.example.innogeeks.ui.theme.ElectricCyan)
+            Column {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("Event Banner", color = MaterialTheme.colorScheme.primary)
                 }
-                Column(horizontalAlignment = androidx.compose.ui.Alignment.End) {
-                    Text("Sessions Held", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text("8", style = MaterialTheme.typography.headlineMedium, color = com.example.innogeeks.ui.theme.ElectricCyan)
+                Spacer(Modifier.height(12.dp))
+                Text("Hackathon 2026", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
+                Spacer(Modifier.height(4.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    androidx.compose.material3.Icon(
+                        Icons.Rounded.CalendarMonth,
+                        contentDescription = null,
+                        modifier = Modifier.size(14.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Spacer(Modifier.width(6.dp))
+                    Text("Tomorrow, 10:00 AM • Main Auditorium", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        }
+
+        Spacer(Modifier.height(28.dp))
+
+        // --- SECTION C: Recent Resources ---
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.Bottom) {
+            Text("Recent Resources", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+            Text("View All", style = MaterialTheme.typography.labelSmall, color = com.example.innogeeks.ui.theme.ElectricCyan)
+        }
+        Spacer(Modifier.height(12.dp))
+        
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            // Resource 1
+            GlassCard(Modifier.fillMaxWidth()) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier.size(40.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), RoundedCornerShape(8.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("📄", fontSize = 20.sp)
+                    }
+                    Spacer(Modifier.width(16.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Kotlin Coroutines Cheatsheet", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
+                        Text("Added 2 hours ago", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+            // Resource 2
+            GlassCard(Modifier.fillMaxWidth()) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(
+                        modifier = Modifier.size(40.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), RoundedCornerShape(8.dp)),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text("🔗", fontSize = 20.sp)
+                    }
+                    Spacer(Modifier.width(16.dp))
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text("Compose Navigation Setup", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
+                        Text("Added yesterday", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
                 }
             }
         }
