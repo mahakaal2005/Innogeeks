@@ -31,6 +31,9 @@ class SplashViewModel(
             // Wait for splash animation
             delay(2_400L.milliseconds)
             
+            // Preload session token into memory so interceptors use it
+            authRepository.preloadSession()
+            
             // Check session
             val session = authRepository.sessionFlow.firstOrNull()
             if (session != null) {

@@ -25,5 +25,5 @@ val appModule = module {
     viewModel { SplashViewModel(get()) }
     viewModel { AuthViewModel(get()) }
     viewModel { HomeViewModel(get()) }
-    viewModel { CoordinatorAttendanceViewModel(get()) }
+    viewModel { CoordinatorAttendanceViewModel(get(), get()) }
 }

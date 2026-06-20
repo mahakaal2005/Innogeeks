@@ -31,8 +31,9 @@ class FakeAttendanceRepository : AttendanceRepository {
     }
     override suspend fun updateAttendance(sessionId: String, req: BulkAttendanceRequest): Result<Unit, DataError.Network> {
         val roster = rosters[sessionId] ?: return Result.Success(Unit)
+        val presentSet = req.presentUserIds.toSet()
         for (i in roster.indices) {
-            roster[i] = roster[i].copy(isPresent = req.presentUserIds.contains(roster[i].userId))
+            roster[i] = roster[i].copy(isPresent = presentSet.contains(roster[i].userId))
         }
         return Result.Success(Unit)
     }

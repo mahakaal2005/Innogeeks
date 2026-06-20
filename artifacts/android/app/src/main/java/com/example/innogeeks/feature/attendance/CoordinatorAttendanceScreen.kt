@@ -24,33 +24,85 @@ import com.example.innogeeks.ui.components.GlassCard
 import com.example.innogeeks.ui.components.GradientBackground
 import com.example.innogeeks.ui.theme.ElectricCyan
 import com.example.innogeeks.ui.theme.InnogeeksTheme
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.windowInsetsPadding
+
+import org.koin.androidx.compose.koinViewModel
+import com.example.innogeeks.feature.attendance.presentation.CoordinatorAttendanceViewModel
+import com.example.innogeeks.feature.attendance.presentation.AttendanceUiState
+import com.example.innogeeks.feature.attendance.presentation.AttendanceAction
+import com.example.innogeeks.feature.attendance.data.dto.AttendanceSession
 
 @Composable
-fun CoordinatorAttendanceScreen() {
-    // For UI demonstration, we toggle between "History" mode and "Active Session" mode
-    var isSessionActive by remember { mutableStateOf(false) }
+fun CoordinatorAttendanceScreen(
+    viewModel: CoordinatorAttendanceViewModel = koinViewModel()
+) {
+    val state by viewModel.state.collectAsState()
+    CoordinatorAttendanceScreenContent(
+        state = state,
+        onAction = viewModel::onAction
+    )
+}
+
+@Composable
+fun CoordinatorAttendanceScreenContent(
+    state: AttendanceUiState = AttendanceUiState(),
+    onAction: (AttendanceAction) -> Unit = {}
+) {
+    // We get domain from the user's login. For now, hardcoded to "android" if we don't have it passed in.
+    val domain = ""  // ViewModel reads domain from user session
+
+    // Load sessions when first opened
+    LaunchedEffect(Unit) {
+        onAction(AttendanceAction.LoadSessions(""))
+    }
 
     GradientBackground {
         Column(modifier = Modifier.fillMaxSize()) {
-            if (!isSessionActive) {
-                AttendanceHistoryView(onStartSession = { isSessionActive = true })
+            if (state.activeSessionId == null) {
+                AttendanceHistoryView(
+                    state = state,
+                    onStartSession = { onAction(AttendanceAction.StartNewSession(domain, "Weekly Meeting")) },
+                    onSessionClick = { session -> onAction(AttendanceAction.LoadRoster(session.id, session.title)) }
+                )
             } else {
-                ActiveSessionRosterView(onFinishSession = { isSessionActive = false })
+                ActiveSessionRosterView(
+                    state = state,
+                    onFinishSession = { onAction(AttendanceAction.SaveRoster) },
+                    onToggleMember = { userId -> onAction(AttendanceAction.ToggleAttendance(userId)) }
+                )
             }
         }
     }
 }
 
 @Composable
-private fun AttendanceHistoryView(onStartSession: () -> Unit) {
+private fun AttendanceHistoryView(
+    state: AttendanceUiState,
+    onStartSession: () -> Unit,
+    onSessionClick: (AttendanceSession) -> Unit
+) {
+    // Measure the system nav bar so we can add the right bottom padding
+    val navBarInsets = WindowInsets.navigationBars
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val navBarBottomDp = with(density) { navBarInsets.getBottom(density).toDp() }
+    // Floating pill nav is ~24dp margin + 12dp vertical padding + ~48dp icon row + navBar
+    val bottomClearance = navBarBottomDp + 100.dp
+
     Column(modifier = Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
         Spacer(Modifier.height(40.dp))
         Text("Attendance", style = MaterialTheme.typography.headlineLarge, color = MaterialTheme.colorScheme.onBackground)
         Text("Manage domain sessions", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         
+        if (state.error != null) {
+            Spacer(Modifier.height(16.dp))
+            Text("Error: ${state.error.asString()}", color = MaterialTheme.colorScheme.error)
+        }
+
         Spacer(Modifier.height(24.dp))
         
-        // Huge Start Session Button
+        // Start Session Button
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -78,22 +130,34 @@ private fun AttendanceHistoryView(onStartSession: () -> Unit) {
         Text("Past Sessions", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
         Spacer(Modifier.height(12.dp))
 
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            items(3) { index ->
-                GlassCard(Modifier.fillMaxWidth()) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Column {
-                            Text("Session ${3 - index}: Compose Basics", style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
-                            Spacer(Modifier.height(4.dp))
-                            Text("Oct ${15 - index * 7}, 2026", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                        Column(horizontalAlignment = Alignment.End) {
-                            Text("34/40", style = MaterialTheme.typography.titleMedium, color = ElectricCyan)
-                            Text("Present", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (state.isLoading && state.sessions.isEmpty()) {
+            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally), color = ElectricCyan)
+        } else if (state.sessions.isEmpty()) {
+            Text("No past sessions found.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        } else {
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                // Last item clears the floating bottom nav completely
+                contentPadding = PaddingValues(bottom = bottomClearance)
+            ) {
+                items(state.sessions.size) { index ->
+                    val session = state.sessions[index]
+                    GlassCard(Modifier.fillMaxWidth().clickable { onSessionClick(session) }) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column {
+                                Text(session.title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface)
+                                Spacer(Modifier.height(4.dp))
+                                Text(session.date, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            Column(horizontalAlignment = Alignment.End) {
+                                Text("${session.presentCount}/${session.totalCount}", style = MaterialTheme.typography.titleMedium, color = ElectricCyan)
+                                Text("Present", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
                         }
                     }
                 }
@@ -103,12 +167,22 @@ private fun AttendanceHistoryView(onStartSession: () -> Unit) {
 }
 
 @Composable
-private fun ActiveSessionRosterView(onFinishSession: () -> Unit) {
-    // Mock domain roster
-    val roster = remember { List(20) { "Member ${it + 1}" } }
-    val presentMembers = remember { mutableStateMapOf<Int, Boolean>() }
+private fun ActiveSessionRosterView(
+    state: AttendanceUiState,
+    onFinishSession: () -> Unit,
+    onToggleMember: (String) -> Unit
+) {
+    // Pill nav breakdown: system navBar + 24dp outer margin + 12dp inner padding + ~48dp icons = ~84dp above navBar
+    // Save button needs to sit above that, so use navigationBarsPadding() + 100dp fixed offset
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val navBarDp = with(density) { WindowInsets.navigationBars.getBottom(density).toDp() }
+    // Button bottom = navBar + 100dp (clears the floating pill nav)
+    val saveButtonBottom = navBarDp + 100.dp
+    // Roster bottom padding = clear the button (56dp) + gap (16dp) + button's own bottom offset
+    val rosterBottomPadding = saveButtonBottom + 72.dp
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Column(modifier = Modifier.fillMaxSize()) {
         // Sticky Header
         Box(
             modifier = Modifier
@@ -123,7 +197,7 @@ private fun ActiveSessionRosterView(onFinishSession: () -> Unit) {
             ) {
                 Column {
                     Text("Session in Progress", style = MaterialTheme.typography.labelSmall, color = ElectricCyan)
-                    Text("Intro to Navigation", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
+                    Text(state.activeSessionTitle, style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
                 }
                 Box(
                     modifier = Modifier
@@ -131,24 +205,31 @@ private fun ActiveSessionRosterView(onFinishSession: () -> Unit) {
                         .background(ElectricCyan.copy(alpha = 0.2f))
                         .padding(horizontal = 12.dp, vertical = 6.dp)
                 ) {
-                    Text("${presentMembers.size}/${roster.size}", style = MaterialTheme.typography.titleMedium, color = ElectricCyan)
+                    Text("${state.presentUserIds.size}/${state.roster.size}", style = MaterialTheme.typography.titleMedium, color = ElectricCyan)
                 }
             }
         }
 
-        // Roster List
+        if (state.isLoading) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator(color = ElectricCyan)
+            }
+            return
+        }
+
+        // Roster List — bottom padding clears the Save button + pill nav completely
         LazyColumn(
             modifier = Modifier.weight(1f).padding(horizontal = 20.dp),
-            contentPadding = PaddingValues(vertical = 16.dp),
+            contentPadding = PaddingValues(top = 16.dp, bottom = rosterBottomPadding),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(roster.size) { index ->
-                val name = roster[index]
-                val isPresent = presentMembers[index] == true
+            items(state.roster.size) { index ->
+                val member = state.roster[index]
+                val isPresent = state.presentUserIds.contains(member.userId)
 
                 GlassCard(
                     modifier = Modifier.fillMaxWidth().clickable {
-                        if (isPresent) presentMembers.remove(index) else presentMembers[index] = true
+                        onToggleMember(member.userId)
                     }
                 ) {
                     Row(
@@ -163,13 +244,16 @@ private fun ActiveSessionRosterView(onFinishSession: () -> Unit) {
                                     .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.1f), CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text(name.first().toString(), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                                Text(member.name.firstOrNull()?.toString() ?: "?", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                             }
                             Spacer(Modifier.width(16.dp))
-                            Text(name, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+                            Column {
+                                Text(member.name, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+                                Text(member.rollNumber, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
                         }
 
-                        // Big Thumb-friendly Toggle
+                        // Toggle
                         Box(
                             modifier = Modifier
                                 .size(48.dp)
@@ -186,18 +270,16 @@ private fun ActiveSessionRosterView(onFinishSession: () -> Unit) {
                     }
                 }
             }
-            
-            // Bottom padding so it doesn't get hidden behind bottom nav
-            item { Spacer(Modifier.height(140.dp)) }
         }
-    }
-    
-    // Floating Finish Button at bottom
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.BottomCenter) {
+        } // close inner Column
+
+        // Floating Save button — sits ABOVE the pill nav, not behind it
         Box(
             modifier = Modifier
-                .padding(bottom = 120.dp)
-                .fillMaxWidth(0.8f)
+                .align(Alignment.BottomCenter)
+                .padding(bottom = saveButtonBottom)
+                .padding(horizontal = 32.dp)
+                .fillMaxWidth()
                 .clip(RoundedCornerShape(50))
                 .background(ElectricCyan)
                 .clickable { onFinishSession() }
@@ -206,13 +288,13 @@ private fun ActiveSessionRosterView(onFinishSession: () -> Unit) {
         ) {
             Text("Finish & Save Attendance", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onPrimary)
         }
-    }
+    } // close outer Box
 }
 
 @Preview(showBackground = true)
 @Composable
 private fun AttendancePreview() {
     InnogeeksTheme(darkTheme = true) {
-        CoordinatorAttendanceScreen()
+        CoordinatorAttendanceScreenContent()
     }
 }

@@ -59,11 +59,26 @@ import com.example.innogeeks.ui.components.PrimaryButton
 import androidx.compose.material3.MaterialTheme
 import com.example.innogeeks.ui.theme.domainColor
 
+import androidx.compose.runtime.LaunchedEffect
+
 @Composable
-fun HomeScreen(vm: HomeViewModel, onNavigateToAttendance: () -> Unit = {}) {
+fun HomeScreen(
+    vm: HomeViewModel,
+    attendanceVm: com.example.innogeeks.feature.attendance.presentation.CoordinatorAttendanceViewModel = org.koin.androidx.compose.koinViewModel(),
+    onNavigateToAttendance: () -> Unit = {},
+    onNavigateToGuestHome: () -> Unit = {}
+) {
     val state by vm.state.collectAsStateWithLifecycle()
     var selectedTab by remember { mutableIntStateOf(0) }
     val hazeState = remember { HazeState() }
+
+    LaunchedEffect(vm.events) {
+        vm.events.collect { event ->
+            when (event) {
+                is HomeEvent.NavigateToGuestHome -> onNavigateToGuestHome()
+            }
+        }
+    }
 
     val role = state.session?.role ?: "public"
     val currentNavItems = if (role == "coordinator" || role == "core_team") coordinatorNavItems else memberNavItems
@@ -90,7 +105,7 @@ fun HomeScreen(vm: HomeViewModel, onNavigateToAttendance: () -> Unit = {}) {
                          )
                     1 -> {
                         if (role == "coordinator" || role == "core_team") {
-                            com.example.innogeeks.feature.attendance.CoordinatorAttendanceScreen()
+                            com.example.innogeeks.feature.attendance.CoordinatorAttendanceScreen(viewModel = attendanceVm)
                         } else {
                             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Text(currentNavItems[1].label + " Coming Soon", color = MaterialTheme.colorScheme.onBackground) }
                         }

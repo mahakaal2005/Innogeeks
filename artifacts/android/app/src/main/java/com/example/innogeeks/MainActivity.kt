@@ -88,13 +88,18 @@ private fun AppRoot() {
                 composable<HomeRoute> {
                     HomeScreen(
                         vm = koinViewModel(),
-                        onNavigateToAttendance = { navController.navigate(AttendanceRoute) }
+                        onNavigateToAttendance = { navController.navigate(AttendanceRoute) },
+                        onNavigateToGuestHome = {
+                            navController.navigate(GuestHomeRoute) {
+                                popUpTo(0) { inclusive = true }
+                            }
+                        }
                     )
                 }
                 
                 composable<AttendanceRoute> {
-                    com.example.innogeeks.feature.attendance.presentation.CoordinatorAttendanceScreen(
-                        vm = koinViewModel()
+                    com.example.innogeeks.feature.attendance.CoordinatorAttendanceScreen(
+                        // using koinViewModel inside directly
                     )
                 }
             }

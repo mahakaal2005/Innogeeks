@@ -73,6 +73,15 @@ class SessionStore(private val context: Context) {
         cachedAccessToken = token
     }
 
+    /** Lightweight update — persists only the new access+refresh tokens after a silent refresh. */
+    suspend fun saveTokens(accessToken: String, refreshToken: String) {
+        context.dataStore.edit { prefs ->
+            prefs[Keys.ACCESS] = accessToken
+            prefs[Keys.REFRESH] = refreshToken
+        }
+        cachedAccessToken = accessToken
+    }
+
     suspend fun save(auth: AuthResponse, profile: ProfileDto) {
         context.dataStore.edit { prefs ->
             prefs[Keys.ACCESS] = auth.accessToken

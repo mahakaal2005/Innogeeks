@@ -12,6 +12,12 @@ interface SupabaseAuthApi {
         @Query("grant_type") grantType: String = "password",
         @Body body: SignInRequest,
     ): AuthResponse
+
+    @POST("auth/v1/token")
+    suspend fun refreshToken(
+        @Query("grant_type") grantType: String = "refresh_token",
+        @Body body: RefreshRequest,
+    ): AuthResponse
 }
 
 /** Supabase PostgREST (data) endpoints. RLS is enforced via the user's bearer token. */
@@ -49,8 +55,10 @@ interface SupabaseRestApi {
     ): List<com.example.innogeeks.feature.attendance.data.dto.DomainMember>
 
     @POST("rest/v1/attendance_records")
-    suspend fun bulkInsertAttendance(
-        @Body records: List<Map<String, Any>> // session_id, user_id, is_present
+    suspend fun bulkUpsertAttendance(
+        @retrofit2.http.Header("Prefer") prefer: String = "resolution=merge-duplicates,return=minimal",
+        @Query("on_conflict") onConflict: String = "session_id,user_id",
+        @Body records: List<com.example.innogeeks.feature.attendance.data.dto.AttendanceRecord>
     )
 
     @GET("rest/v1/attendance_records")

@@ -4,7 +4,7 @@
       "command": "npx",
       "args": [
         "-y",
-        "@supabase/mcp-server-supabase"
+        "supabase-mcp"
       ],
       "env": {
         "SUPABASE_URL": "https://qdonxhtsydbtvvxvqajy.supabase.co",

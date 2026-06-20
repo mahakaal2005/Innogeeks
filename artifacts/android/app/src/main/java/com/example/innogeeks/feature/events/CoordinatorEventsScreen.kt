@@ -43,7 +43,7 @@ fun CoordinatorEventsScreen() {
             // Events Feed
             LazyColumn(
                 modifier = Modifier.weight(1f).padding(horizontal = 20.dp),
-                contentPadding = PaddingValues(bottom = 160.dp), // Extra padding for bottom nav
+                contentPadding = PaddingValues(bottom = 240.dp), // Extra padding for bottom nav and FAB
                 verticalArrangement = Arrangement.spacedBy(24.dp)
             ) {
                 // Mock Event 1

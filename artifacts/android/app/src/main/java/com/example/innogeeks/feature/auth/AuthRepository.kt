@@ -15,6 +15,10 @@ class AuthRepository(
 ) {
     val sessionFlow: Flow<Session?> = sessionStore.sessionFlow
 
+    suspend fun preloadSession() {
+        sessionStore.preload()
+    }
+
     suspend fun signIn(email: String, password: String): com.example.innogeeks.core.common.Result<Unit, com.example.innogeeks.core.common.DataError.Network> {
         val previousToken = sessionStore.cachedAccessToken
         return try {
