@@ -9,21 +9,27 @@ import com.example.innogeeks.feature.splash.SplashViewModel
 import com.example.innogeeks.feature.attendance.data.AttendanceRepository
 import com.example.innogeeks.feature.attendance.data.FakeAttendanceRepository
 import com.example.innogeeks.feature.attendance.presentation.CoordinatorAttendanceViewModel
+import com.example.innogeeks.feature.events.CoordinatorEventsViewModel
 import org.koin.android.ext.koin.androidContext
 import org.koin.androidx.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 
 val appModule = module {
     single { SessionStore(androidContext()) }
+    single { com.example.innogeeks.core.network.CloudinaryService(androidContext()) }
 
     single { Network.supabaseAuthApi(get()) }
     single { Network.supabaseRestApi(get()) }
 
     single { AuthRepository(get(), get(), get()) }
     single<AttendanceRepository> { com.example.innogeeks.feature.attendance.data.SupabaseAttendanceRepository(get()) }
+    single { com.example.innogeeks.feature.events.data.EventsRepository(get()) }
+    single { com.example.innogeeks.feature.resources.data.ResourcesRepository(get()) }
     
     viewModel { SplashViewModel(get()) }
     viewModel { AuthViewModel(get()) }
     viewModel { HomeViewModel(get()) }
+    viewModel { CoordinatorEventsViewModel(get(), get(), get()) }
+    viewModel { com.example.innogeeks.feature.resources.CoordinatorResourcesViewModel(get(), get(), get()) }
     viewModel { CoordinatorAttendanceViewModel(get(), get()) }
 }

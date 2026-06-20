@@ -66,4 +66,30 @@ interface SupabaseRestApi {
         @Query("session_id") sessionIdFilter: String, // "eq.<uuid>"
         @Query("select") select: String = "user_id,is_present"
     ): List<Map<String, Any>>
+
+    @GET("rest/v1/events")
+    suspend fun getEvents(
+        @Query("domain") domainFilter: String, // "eq.<domain>"
+        @Query("select") select: String = "*",
+        @Query("order") order: String = "created_at.desc"
+    ): List<com.example.innogeeks.feature.events.data.EventDto>
+
+    @POST("rest/v1/events")
+    suspend fun createEvent(
+        @retrofit2.http.Header("Prefer") prefer: String = "return=representation",
+        @Body body: Map<String, String>
+    ): List<com.example.innogeeks.feature.events.data.EventDto>
+
+    @GET("rest/v1/resources")
+    suspend fun getResources(
+        @Query("domain") domainFilter: String, // "eq.<domain>"
+        @Query("select") select: String = "*",
+        @Query("order") order: String = "created_at.desc"
+    ): List<com.example.innogeeks.feature.resources.data.ResourceDto>
+
+    @POST("rest/v1/resources")
+    suspend fun createResource(
+        @retrofit2.http.Header("Prefer") prefer: String = "return=representation",
+        @Body body: Map<String, String>
+    ): List<com.example.innogeeks.feature.resources.data.ResourceDto>
 }

@@ -79,6 +79,7 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.collections.immutable)
     implementation("dev.chrisbanes.haze:haze-jetpack-compose:0.4.1")
+    implementation("io.coil-kt:coil-compose:2.6.0")
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(platform(libs.androidx.compose.bom))

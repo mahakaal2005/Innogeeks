@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -16,17 +17,42 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.example.innogeeks.ui.components.GlassCard
 import com.example.innogeeks.ui.components.GradientBackground
 import com.example.innogeeks.ui.theme.ElectricCyan
 import com.example.innogeeks.ui.theme.InnogeeksTheme
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import org.koin.androidx.compose.koinViewModel
+
 @Composable
-fun CoordinatorEventsScreen() {
+fun CoordinatorEventsScreen(
+    viewModel: CoordinatorEventsViewModel = koinViewModel()
+) {
     var showCreateDialog by remember { mutableStateOf(false) }
+    val isUploading by viewModel.isUploading.collectAsState()
+    val uploadedUrl by viewModel.uploadedPosterUrl.collectAsState()
+    val events by viewModel.events.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+
+    var newTitle by remember { mutableStateOf("") }
+    var newDate by remember { mutableStateOf("") }
+    var newDesc by remember { mutableStateOf("") }
+
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.PickVisualMedia()
+    ) { uri ->
+        if (uri != null) {
+            viewModel.uploadPoster(uri)
+        }
+    }
 
     GradientBackground {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -40,30 +66,26 @@ fun CoordinatorEventsScreen() {
             
             Spacer(Modifier.height(24.dp))
 
-            // Events Feed
-            LazyColumn(
-                modifier = Modifier.weight(1f).padding(horizontal = 20.dp),
-                contentPadding = PaddingValues(bottom = 240.dp), // Extra padding for bottom nav and FAB
-                verticalArrangement = Arrangement.spacedBy(24.dp)
-            ) {
-                // Mock Event 1
-                item {
-                    EventCard(
-                        title = "Hackathon 2026",
-                        date = "Oct 25, 2026",
-                        time = "10:00 AM - 6:00 PM",
-                        location = "Main Auditorium"
-                    )
+            if (isLoading && events.isEmpty()) {
+                Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = ElectricCyan)
                 }
-
-                // Mock Event 2
-                item {
-                    EventCard(
-                        title = "Intro to Android UI",
-                        date = "Nov 2, 2026",
-                        time = "4:00 PM - 5:30 PM",
-                        location = "Lab 4, CSE Block"
-                    )
+            } else {
+                // Events Feed
+                LazyColumn(
+                    modifier = Modifier.weight(1f).padding(horizontal = 20.dp),
+                    contentPadding = PaddingValues(bottom = 240.dp), // Extra padding for bottom nav and FAB
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
+                    items(events) { event ->
+                        EventCard(
+                            title = event.title,
+                            date = event.eventDate,
+                            time = "", // We can add time later to DTO if needed
+                            location = event.description, // using desc as location for now
+                            imageUrl = event.posterUrl
+                        )
+                    }
                 }
             }
         }
@@ -83,7 +105,7 @@ fun CoordinatorEventsScreen() {
             }
         }
 
-        // Create Event Mock Dialog
+        // Create Event Dialog
         if (showCreateDialog) {
             Box(
                 modifier = Modifier
@@ -96,18 +118,72 @@ fun CoordinatorEventsScreen() {
                     Column(Modifier.fillMaxWidth()) {
                         Text("Post New Event", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.onSurface)
                         Spacer(Modifier.height(16.dp))
+                        
+                        OutlinedTextField(
+                            value = newTitle,
+                            onValueChange = { newTitle = it },
+                            label = { Text("Event Title") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = newDate,
+                            onValueChange = { newDate = it },
+                            label = { Text("Date (e.g. Oct 25, 2026)") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        OutlinedTextField(
+                            value = newDesc,
+                            onValueChange = { newDesc = it },
+                            label = { Text("Location / Description") },
+                            modifier = Modifier.fillMaxWidth(),
+                            maxLines = 2
+                        )
+                        Spacer(Modifier.height(16.dp))
+
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(100.dp)
                                 .clip(RoundedCornerShape(8.dp))
-                                .background(ElectricCyan.copy(alpha = 0.2f)),
+                                .background(ElectricCyan.copy(alpha = 0.2f))
+                                .clickable { 
+                                    if (!isUploading) {
+                                        photoPickerLauncher.launch(
+                                            PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)
+                                        )
+                                    }
+                                },
                             contentAlignment = Alignment.Center
                         ) {
-                            Text("Tap to upload Poster (Cloudinary)", color = ElectricCyan)
+                            if (isUploading) {
+                                CircularProgressIndicator(color = ElectricCyan, modifier = Modifier.size(24.dp))
+                            } else if (uploadedUrl != null) {
+                                Text("Poster uploaded successfully!", color = ElectricCyan)
+                            } else {
+                                Text("Tap to upload Poster (Cloudinary)", color = ElectricCyan)
+                            }
                         }
-                        Spacer(Modifier.height(16.dp))
-                        Text("This will be immediately broadcasted to the domain board.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        
+                        Spacer(Modifier.height(24.dp))
+                        
+                        Button(
+                            onClick = {
+                                viewModel.postEvent(newTitle, newDesc, newDate, uploadedUrl)
+                                showCreateDialog = false
+                                newTitle = ""
+                                newDate = ""
+                                newDesc = ""
+                                viewModel.clearUploadState()
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = ElectricCyan, contentColor = MaterialTheme.colorScheme.onPrimary)
+                        ) {
+                            Text("Post to Board")
+                        }
                     }
                 }
             }
@@ -116,7 +192,7 @@ fun CoordinatorEventsScreen() {
 }
 
 @Composable
-private fun EventCard(title: String, date: String, time: String, location: String) {
+private fun EventCard(title: String, date: String, time: String, location: String, imageUrl: String?) {
     GlassCard(Modifier.fillMaxWidth()) {
         Column(Modifier.fillMaxWidth()) {
             // Hero Image Container
@@ -128,7 +204,16 @@ private fun EventCard(title: String, date: String, time: String, location: Strin
                     .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
                 contentAlignment = Alignment.Center
             ) {
-                Text("Poster Image", color = MaterialTheme.colorScheme.primary)
+                if (!imageUrl.isNullOrBlank()) {
+                    AsyncImage(
+                        model = imageUrl,
+                        contentDescription = "Event Poster",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Text("No Poster", color = MaterialTheme.colorScheme.primary)
+                }
             }
             
             Spacer(Modifier.height(16.dp))
@@ -142,7 +227,7 @@ private fun EventCard(title: String, date: String, time: String, location: Strin
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Rounded.CalendarMonth, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         Spacer(Modifier.width(8.dp))
-                        Text("$date • $time", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(if (time.isNotBlank()) "$date • $time" else date, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     
                     Spacer(Modifier.height(4.dp))
@@ -167,13 +252,5 @@ private fun EventCard(title: String, date: String, time: String, location: Strin
                 }
             }
         }
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-private fun EventsPreview() {
-    InnogeeksTheme(darkTheme = true) {
-        CoordinatorEventsScreen()
     }
 }

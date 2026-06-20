@@ -96,7 +96,7 @@ private fun AppRoot() {
                         }
                     )
                 }
-                
+
                 composable<AttendanceRoute> {
                     com.example.innogeeks.feature.attendance.CoordinatorAttendanceScreen(
                         // using koinViewModel inside directly

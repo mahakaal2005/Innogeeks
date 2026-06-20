@@ -11,7 +11,7 @@ class AttendanceRepositoryTest {
     @Test
     fun testFakeRepository() = runTest {
         val repo = FakeAttendanceRepository()
-        val result = repo.createSession(CreateSessionRequest("android", "Week 1"))
+        val result = repo.createSession(CreateSessionRequest("android", "Week 1", "2026-06-21"))
         assertTrue(result is Result.Success)
         
         val session = (result as Result.Success).data
